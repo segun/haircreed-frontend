@@ -65,24 +65,39 @@ export default function LoginPage() {
         setLoading(true);
         setError("");
 
-        // --- API Call Simulation ---
-        // In a real app, you'd call your NestJS backend here.
-        // Example: const response = await api.login({ username, password });
-        console.log("Attempting login with:", { username, password });
+        try {
+            // --- REAL API CALL using fetch ---
+            const response = await fetch('http://localhost:3000/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
 
-        // Simulate network delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+            // fetch doesn't throw an error for bad HTTP status, so we check the 'ok' status
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error: ${response.statusText}`);
+            }
 
-        // Simulate success/failure
-        if (username === "admin" && password === "password") {
-            console.log("Login successful!");
-            // Redirect to dashboard
-        } else {
-            setError("Invalid username or password.");
+            const data = await response.json();
+            console.log("Login successful!", data);
+            // TODO: Handle successful login:
+            // 1. Save the user data/token (e.g., in context or state management)
+            // 2. Redirect to the admin dashboard.
+
+        } catch (err) {
+            // Handle network errors or errors thrown from the response check
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown error occurred.");
+            }
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
-        // --- End Simulation ---
-
-        setLoading(false);
     };
 
     return (
@@ -134,3 +149,4 @@ export default function LoginPage() {
         </div>
     );
 }
+
