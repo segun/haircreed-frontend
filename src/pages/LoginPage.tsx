@@ -1,5 +1,19 @@
 import React, { useState } from "react";
 
+// Define the user type that the API will return on success
+type User = {
+  id: string;
+  username: string;
+  fullName: string;
+  role: 'admin' | 'pos';
+};
+
+// Define the props for the LoginPage, including the callback
+type LoginPageProps = {
+  onLoginSuccess: (user: User) => void;
+};
+
+
 type InputFieldProps = {
     id: string;
     label: string;
@@ -27,7 +41,6 @@ const InputField = ({
                 name={id}
                 type={type}
                 required
-                // Added text-zinc-900 to ensure typed text is dark and readable
                 className="appearance-none block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm placeholder-zinc-400 text-zinc-900 focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
                 value={value}
                 onChange={onChange}
@@ -54,7 +67,7 @@ const Button = ({ children, type = "submit", loading = false }: ButtonProps) => 
 );
 
 // The main Login Page component
-export default function LoginPage() {
+export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -66,7 +79,6 @@ export default function LoginPage() {
         setError("");
 
         try {
-            // --- REAL API CALL using fetch ---
             const response = await fetch('http://localhost:3000/auth/login', {
                 method: 'POST',
                 headers: {
@@ -75,20 +87,17 @@ export default function LoginPage() {
                 body: JSON.stringify({ username, password }),
             });
 
-            // fetch doesn't throw an error for bad HTTP status, so we check the 'ok' status
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || `Error: ${response.statusText}`);
             }
 
-            const data = await response.json();
+            const data: User = await response.json();
             console.log("Login successful!", data);
-            // TODO: Handle successful login:
-            // 1. Save the user data/token (e.g., in context or state management)
-            // 2. Redirect to the admin dashboard.
+            
+            onLoginSuccess(data);
 
         } catch (err) {
-            // Handle network errors or errors thrown from the response check
             if (err instanceof Error) {
                 setError(err.message);
             } else {
@@ -101,10 +110,8 @@ export default function LoginPage() {
     };
 
     return (
-        // Changed background to a light zinc color
         <div className="min-h-screen bg-zinc-100 flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                {/* You can replace this with your business logo */}
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-zinc-900">
                     Sign in to your account
                 </h2>
@@ -149,4 +156,3 @@ export default function LoginPage() {
         </div>
     );
 }
-

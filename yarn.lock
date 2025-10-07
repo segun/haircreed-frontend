@@ -408,6 +408,28 @@
   resolved "https://registry.yarnpkg.com/@humanwhocodes/retry/-/retry-0.4.3.tgz#c2b9d2e374ee62c586d3adbea87199b1d7a7a6ba"
   integrity sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==
 
+"@instantdb/core@v0.22.6":
+  version "0.22.6"
+  resolved "https://registry.yarnpkg.com/@instantdb/core/-/core-0.22.6.tgz#7ca5d54d4f46fa52e4f9811b37a75617e7f1a752"
+  integrity sha512-mrRR4zvPJtgkNA1P11hjEUOG1KmbdVVSUE8CaA1he+AXiz2IAv+1RvSiRf2gf7jxprMtbFpjV1rGI/Z9bzdVuQ==
+  dependencies:
+    "@instantdb/version" v0.22.6
+    mutative "^1.0.10"
+    uuid "^11.1.0"
+
+"@instantdb/react@^0.22.6":
+  version "0.22.6"
+  resolved "https://registry.yarnpkg.com/@instantdb/react/-/react-0.22.6.tgz#9018f1a28171374684dd1c81ba3e125d1060e38c"
+  integrity sha512-BBK5y8mdjyGuV1HLjR7TpgENjFtg5zfYPx+0P8d9cPD5obcDGV/1jtXyq3ZZDz5eOfe6zuSvrp5IwVmiUJfKPg==
+  dependencies:
+    "@instantdb/core" v0.22.6
+    "@instantdb/version" v0.22.6
+
+"@instantdb/version@v0.22.6":
+  version "0.22.6"
+  resolved "https://registry.yarnpkg.com/@instantdb/version/-/version-0.22.6.tgz#6ed3f9c9c8fc3e5d8e45ec6f7eee8627e462cbea"
+  integrity sha512-6CQscrlKKQVjfu51Yxmewc2qmaoAMIAETGVje56jVaHU3WTdzu6sYTyuQx20fz+oMMQgdwJ89jGNi0gSTkQ6ng==
+
 "@isaacs/fs-minipass@^4.0.0":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@isaacs/fs-minipass/-/fs-minipass-4.0.1.tgz#2d59ae3ab4b38fb4270bfa23d30f8e2e86c7fe32"
@@ -765,7 +787,7 @@
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
-"@types/node@^24.6.0":
+"@types/node@^24.7.0":
   version "24.7.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-24.7.0.tgz#a34c9f0d3401db396782e440317dd5d8373c286f"
   integrity sha512-IbKooQVqUBrlzWTi79E8Fw78l8k1RNtlDDNWsFZs7XonuQSJ8oNYfEeclhprUldXISRMLzBpILuKgPlIxm+/Yw==
@@ -1056,6 +1078,11 @@ detect-libc@^2.0.3, detect-libc@^2.0.4:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/detect-libc/-/detect-libc-2.1.2.tgz#689c5dcdc1900ef5583a4cb9f6d7b473742074ad"
   integrity sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==
+
+dotenv@^17.2.3:
+  version "17.2.3"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-17.2.3.tgz#ad995d6997f639b11065f419a22fabf567cdb9a2"
+  integrity sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==
 
 electron-to-chromium@^1.5.227:
   version "1.5.230"
@@ -1530,6 +1557,11 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
+lucide-react@^0.545.0:
+  version "0.545.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.545.0.tgz#82affd1b581d358356578dd033e11dd17e6493a0"
+  integrity sha512-7r1/yUuflQDSt4f1bpn5ZAocyIxcTyVyBBChSVtBKn5M+392cPmI5YJMWOJKk/HUWGm5wg83chlAZtCcGbEZtw==
+
 magic-string@^0.30.19:
   version "0.30.19"
   resolved "https://registry.yarnpkg.com/magic-string/-/magic-string-0.30.19.tgz#cebe9f104e565602e5d2098c5f2e79a77cc86da9"
@@ -1580,6 +1612,11 @@ ms@^2.1.3:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
+
+mutative@^1.0.10:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/mutative/-/mutative-1.3.0.tgz#9cb4f216813267487fadfae794881ed6ee69f444"
+  integrity sha512-8MJj6URmOZAV70dpFe1YnSppRTKC4DsMkXQiBDFayLcDI4ljGokHxmpqaBQuDWa4iAxWaJJ1PS8vAmbntjjKmQ==
 
 nanoid@^3.3.11:
   version "3.3.11"
@@ -1884,6 +1921,11 @@ uri-js@^4.2.2:
   integrity sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==
   dependencies:
     punycode "^2.1.0"
+
+uuid@^11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 vite@^7.1.7:
   version "7.1.9"
