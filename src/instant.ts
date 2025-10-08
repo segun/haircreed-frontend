@@ -6,6 +6,7 @@ export const _schema = i.schema({
       id: i.string().unique(),
       fullName: i.string(),
       username: i.string().unique(),
+      email: i.string().unique(),
       passwordHash: i.string(),
       role: i.string(),
       requiresPasswordReset: i.boolean(),

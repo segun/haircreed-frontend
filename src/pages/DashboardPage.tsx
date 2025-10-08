@@ -1,5 +1,6 @@
-import type { Page, User } from "../App";
+import type { Page } from "../App";
 import AdminLayout from '../components/layouts/AdminLayout';
+import type { User } from "../types";
 
 // A simple placeholder card
 const StatCard = ({ title, value, change }: { title: string; value: string; change?: string; }) => (

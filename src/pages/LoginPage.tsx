@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-
-// Define the user type that the API will return on success
-type User = {
-  id: string;
-  username: string;
-  fullName: string;
-  role: 'admin' | 'pos';
-};
+import type { User } from "../types";
 
 // Define the props for the LoginPage, including the callback
 type LoginPageProps = {

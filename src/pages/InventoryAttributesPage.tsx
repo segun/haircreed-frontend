@@ -4,9 +4,9 @@ import db from "../instant";
 import AttributeManager from "../components/admin/AttributeManager";
 import AdminLayout from "../components/layouts/AdminLayout";
 import ConfirmDialog from "../components/common/ConfirmDialog";
-import type { Page, User } from "../App";
+import type { Page } from "../App";
 import { createCategory, deleteCategory as apiDeleteCategory } from "../api/inventoryAttributes";
-import type { AttributeCategory } from "../types";
+import type { AttributeCategory, User } from "../types";
 
 type InventoryAttributesPageProps = {
     user: User;

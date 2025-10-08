@@ -1,5 +1,4 @@
-
-import type { AttributeCategory, AttributeItem } from '../types/inventory';
+import type { AttributeCategory, AttributeItem } from "../types";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_INVENTORY_ATTRIBUTES_ENDPOINT}`
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Edit2, Trash2, PlusCircle, X } from 'lucide-react';
-import type { AttributeCategory, AttributeItem } from "../../types/inventory";
 import { createItem, updateItem, deleteItem as apiDeleteItem } from '../../api/inventoryAttributes';
 import ConfirmDialog from '../common/ConfirmDialog';
+import type { AttributeCategory, AttributeItem } from "../../types";
 
 type AttributeManagerProps = {
     category: AttributeCategory;

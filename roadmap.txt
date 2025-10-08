@@ -14,11 +14,11 @@ Step 5: User Authentication (Login/Logout) (Complete)
 
 Step 6: Admin Dashboard Layout (Sidebar, Header) (Complete)
 
-Step 7: Admin CRUD - Inventory Management (Sizes, Colors, Styles) (Current Step)
+Step 7: Admin CRUD - Inventory Management (Sizes, Colors, Styles)
 
 Frontend UI (Complete)
 
-Backend API & Database Integration (Next)
+Backend API & Database Integration
 
 Step 8: Admin CRUD - Inventory Items (Adding/Editing Stock)
 
