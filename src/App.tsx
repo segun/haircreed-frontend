@@ -7,6 +7,7 @@ import UserManagementPage from './pages/UserManagementPage';
 import PasswordResetPage from './pages/PasswordResetPage';
 import type { User } from "./types";
 import { updateUser } from './api/users';
+import OrderPage from "./pages/OrderPage";
 
 export type Page = 'dashboard' | 'inventory-attributes' | 'inventory' | 'orders' | 'reports' | 'users';
 
@@ -19,6 +20,8 @@ function App() {
     setUser(userData);
     if (userData.requiresPasswordReset) {
       setNeedsPasswordReset(true);
+    } else if (userData.role === 'POS_OPERATOR') {
+      setCurrentPage('orders');
     } else {
       setCurrentPage('dashboard');
     }
@@ -45,6 +48,9 @@ function App() {
   }
 
   const renderPage = () => {
+    if (user?.role === 'POS_OPERATOR') {
+      return <OrderPage user={user} setCurrentPage={setCurrentPage}/>;
+    }
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage user={user} setCurrentPage={setCurrentPage} />;
@@ -52,6 +58,8 @@ function App() {
         return <InventoryAttributesPage user={user} setCurrentPage={setCurrentPage} />;
       case 'users':
         return <UserManagementPage user={user} setCurrentPage={setCurrentPage}/>;
+      case 'orders':
+        return <OrderPage user={user} setCurrentPage={setCurrentPage}/>;
       default:
         return <DashboardPage user={user} setCurrentPage={setCurrentPage} />;
     }
@@ -61,4 +69,5 @@ function App() {
 }
 
 export default App;
+
 

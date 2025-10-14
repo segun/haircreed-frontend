@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Package, ShoppingCart, BarChart2, Users, LogOut, Settings } from 'lucide-react';
-import type { Page, User } from '../../App';
+import type { Page } from '../../App';
+import type { User } from "../../types";
 
 type AdminLayoutProps = {
   user: User;
