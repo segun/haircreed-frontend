@@ -4,16 +4,14 @@ import { createUser, deleteUser, updateUser } from "../api/users";
 import AdminLayout from "../components/layouts/AdminLayout";
 import UserForm from "../components/admin/UserForm";
 import UserTable from "../components/admin/UserTable";
-import type { Page } from "../App";
 import db from "../instant";
 
 type UserManagementPageProps = {
     user: User;
-    setCurrentPage: (page: Page) => void;
     onLogout: () => void;
 };
 
-const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, setCurrentPage, onLogout }: UserManagementPageProps) => {
+const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout }: UserManagementPageProps) => {
     const { data } = db.useQuery({ Users: {} });
     const users = data?.Users || [];
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -50,7 +48,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, setCurren
     };
 
     return (
-        <AdminLayout currentPage="users" pageTitle="User Management" user={user || undefined} setCurrentPage={setCurrentPage} onLogout={onLogout}>
+        <AdminLayout pageTitle="User Management" user={user || undefined} onLogout={onLogout}>
             <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">User Management</h1>

@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
 import type { User, AttributeCategory } from '../types';
-import type { Page } from '../App';
 import { getCategories } from '../api/inventoryAttributes';
 
 interface OrderPageProps {
   user: User;
-  setCurrentPage: (page: Page) => void;
   onLogout: () => void;
 }
 
@@ -15,7 +13,7 @@ interface OrderItem {
   name: string;
   price: number;
 }
-const OrderPage: React.FC<OrderPageProps> = ({ user, setCurrentPage, onLogout }) => {
+const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [attributes, setAttributes] = useState<AttributeCategory[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -72,7 +70,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, setCurrentPage, onLogout })
   };
 
   return (
-    <AdminLayout user={user} setCurrentPage={setCurrentPage} onLogout={onLogout} currentPage="orders" pageTitle="Order">
+    <AdminLayout user={user} onLogout={onLogout} pageTitle="Order">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-sm">

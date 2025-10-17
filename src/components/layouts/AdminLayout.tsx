@@ -1,13 +1,11 @@
 import React from 'react';
 import { Home, Package, ShoppingCart, BarChart2, Users, LogOut, Settings } from 'lucide-react';
-import type { Page } from '../../App';
+import { Link, useLocation } from 'react-router-dom';
 import type { User } from "../../types";
 
 type AdminLayoutProps = {
   user: User;
   children: React.ReactNode;
-  currentPage: Page;
-  setCurrentPage: (page: Page) => void;
   pageTitle: string;
   onLogout: () => void;
 };
@@ -18,9 +16,9 @@ const getInitials = (name: string | undefined) => {
   return names.map(n => n[0]).join('').toUpperCase();
 };
 
-const SidebarLink = ({ icon, text, active, onClick }: { icon: React.ReactNode, text: string, active: boolean, onClick: () => void }) => (
-  <button
-    onClick={onClick}
+const SidebarLink = ({ icon, text, active, to }: { icon: React.ReactNode, text: string, active: boolean, to: string }) => (
+  <Link
+    to={to}
     className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors
       ${active
         ? 'bg-zinc-700 text-white'
@@ -29,20 +27,30 @@ const SidebarLink = ({ icon, text, active, onClick }: { icon: React.ReactNode, t
   >
     {icon}
     <span className="ml-3">{text}</span>
+  </Link>
+);
+
+const LogoutButton = ({ icon, text, onClick }: { icon: React.ReactNode, text: string, onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors text-zinc-400 hover:bg-zinc-700 hover:text-white'}`}
+  >
+    {icon}
+    <span className="ml-3">{text}</span>
   </button>
 );
 
-export default function AdminLayout({ user, children, currentPage, setCurrentPage, pageTitle, onLogout }: AdminLayoutProps) {
-  
+export default function AdminLayout({ user, children, pageTitle, onLogout }: AdminLayoutProps) {
+  const location = useLocation();
   const businessName = "HairCreed";
 
   const navigation = [
-    { name: 'Dashboard', page: 'dashboard', icon: <Home size={20} /> },
-    { name: 'Inventory', page: 'inventory', icon: <Package size={20} /> },
-    { name: 'Orders', page: 'orders', icon: <ShoppingCart size={20} /> },
-    { name: 'Reports', page: 'reports', icon: <BarChart2 size={20} /> },
-    { name: 'Users', page: 'users', icon: <Users size={20} /> },
-    { name: 'Attributes', page: 'inventory-attributes', icon: <Settings size={20} /> },
+    { name: 'Dashboard', path: '/dashboard', icon: <Home size={20} /> },
+    { name: 'Inventory', path: '/inventory', icon: <Package size={20} /> },
+    { name: 'Orders', path: '/orders', icon: <ShoppingCart size={20} /> },
+    { name: 'Reports', path: '/reports', icon: <BarChart2 size={20} /> },
+    { name: 'Users', path: '/users', icon: <Users size={20} /> },
+    { name: 'Attributes', path: '/inventory-attributes', icon: <Settings size={20} /> },
   ];
 
   return (
@@ -57,13 +65,13 @@ export default function AdminLayout({ user, children, currentPage, setCurrentPag
               key={item.name} 
               icon={item.icon} 
               text={item.name} 
-              active={currentPage === item.page}
-              onClick={() => setCurrentPage(item.page as Page)}
+              active={location.pathname === item.path}
+              to={item.path}
             />
           ))}
         </nav>
         <div className="mt-auto">
-           <SidebarLink icon={<LogOut size={20} />} text="Logout" active={false} onClick={onLogout} />
+           <LogoutButton icon={<LogOut size={20} />} text="Logout" onClick={onLogout} />
         </div>
       </div>
 

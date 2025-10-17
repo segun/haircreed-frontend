@@ -1,4 +1,3 @@
-import type { Page } from "../App";
 import AdminLayout from '../components/layouts/AdminLayout';
 import type { User } from "../types";
 
@@ -13,16 +12,13 @@ const StatCard = ({ title, value, change }: { title: string; value: string; chan
 
 type DashboardPageProps = {
     user: User;
-    setCurrentPage: (page: Page) => void;
     onLogout: () => void;
 };
 
-export default function DashboardPage({ user, setCurrentPage, onLogout }: DashboardPageProps) {
+export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
   return (
     <AdminLayout 
         user={user} 
-        currentPage="dashboard" 
-        setCurrentPage={setCurrentPage}
         onLogout={onLogout}
         pageTitle="Dashboard"
     >

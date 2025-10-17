@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
@@ -10,8 +11,6 @@ import type { User } from "./types";
 import { updateUser } from './api/users';
 import OrderPage from "./pages/OrderPage";
 
-export type Page = 'dashboard' | 'inventory-attributes' | 'inventory' | 'orders' | 'reports' | 'users';
-
 function App() {
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -22,8 +21,21 @@ function App() {
       return null;
     }
   });
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (user && user.requiresPasswordReset) {
+      setNeedsPasswordReset(true);
+    } else if (user && location.pathname === '/') {
+        if (user.role === 'POS_OPERATOR') {
+            navigate('/orders');
+        } else {
+            navigate('/dashboard');
+        }
+    }
+  }, [user, navigate, location.pathname]);
 
   const handleLoginSuccess = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
@@ -31,9 +43,9 @@ function App() {
     if (userData.requiresPasswordReset) {
       setNeedsPasswordReset(true);
     } else if (userData.role === 'POS_OPERATOR') {
-      setCurrentPage('orders');
+      navigate('/orders');
     } else {
-      setCurrentPage('dashboard');
+      navigate('/dashboard');
     }
   };
 
@@ -46,14 +58,14 @@ function App() {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       setNeedsPasswordReset(false);
-      setCurrentPage('dashboard');
+      navigate('/dashboard');
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    // Optional: redirect to login or show a logged out message
+    navigate('/');
   };
 
   if (!user) {
@@ -64,27 +76,19 @@ function App() {
     return <PasswordResetPage onPasswordReset={handlePasswordReset} />;
   }
 
-  const renderPage = () => {
-    if (user?.role === 'POS_OPERATOR') {
-      return <OrderPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-    }
-    switch (currentPage) {
-      case 'dashboard':
-        return <DashboardPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-      case 'inventory-attributes':
-        return <InventoryAttributesPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-      case 'inventory':
-        return <InventoryPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-      case 'users':
-        return <UserManagementPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-      case 'orders':
-        return <OrderPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-      default:
-        return <DashboardPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
-    }
-  };
-
-  return <>{renderPage()}</>;
+  return (
+    <Routes>
+      <Route path="/dashboard" element={<DashboardPage user={user} onLogout={handleLogout} />} />
+      <Route path="/inventory-attributes" element={<InventoryAttributesPage user={user} onLogout={handleLogout} />} />
+      <Route path="/inventory" element={<InventoryPage user={user} onLogout={handleLogout} />} />
+      <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
+      <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
+      {/* Add a route for reports, or a redirect */}
+      <Route path="/reports" element={<div>Reports Page</div>} />
+      {/* Redirect from root to a default page */}
+      <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
+    </Routes>
+  );
 }
 
 export default App;

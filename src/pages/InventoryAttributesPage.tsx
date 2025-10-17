@@ -4,19 +4,16 @@ import db from "../instant";
 import AttributeManager from "../components/admin/AttributeManager";
 import AdminLayout from "../components/layouts/AdminLayout";
 import ConfirmDialog from "../components/common/ConfirmDialog";
-import type { Page } from "../App";
 import { createCategory, deleteCategory as apiDeleteCategory } from "../api/inventoryAttributes";
 import type { AttributeCategory, User } from "../types";
 
 type InventoryAttributesPageProps = {
     user: User;
-    setCurrentPage: (page: Page) => void;
     onLogout: () => void;
 };
 
 export default function InventoryAttributesPage({
     user,
-    setCurrentPage,
     onLogout,
 }: InventoryAttributesPageProps) {
     const [newCategoryName, setNewCategoryName] = useState("");
@@ -69,8 +66,6 @@ export default function InventoryAttributesPage({
             />
             <AdminLayout
                 user={user}
-                currentPage="inventory-attributes"
-                setCurrentPage={setCurrentPage}
                 pageTitle="Inventory Attributes"
                 onLogout={onLogout}
             >
