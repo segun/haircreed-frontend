@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import InventoryAttributesPage from './pages/InventoryAttributesPage';
 import UserManagementPage from './pages/UserManagementPage';
+import InventoryPage from './pages/InventoryPage';
 import PasswordResetPage from './pages/PasswordResetPage';
 import type { User } from "./types";
 import { updateUser } from './api/users';
@@ -56,6 +57,8 @@ function App() {
         return <DashboardPage user={user} setCurrentPage={setCurrentPage} />;
       case 'inventory-attributes':
         return <InventoryAttributesPage user={user} setCurrentPage={setCurrentPage} />;
+      case 'inventory':
+        return <InventoryPage user={user} setCurrentPage={setCurrentPage} />;
       case 'users':
         return <UserManagementPage user={user} setCurrentPage={setCurrentPage}/>;
       case 'orders':
@@ -69,5 +72,3 @@ function App() {
 }
 
 export default App;
-
-

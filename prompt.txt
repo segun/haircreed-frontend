@@ -1,0 +1,22 @@
+I want to build a software for my business. A responsive web app.
+
+I have a hair making and selling business.
+
+I order hair from my suppliers in bulk, hair comes in sizes from 8inches to 30 inches in a packet....there could be other sizes as well, but those are the most common. There's also a type of hair called frontal that comes in only one size. The 8 inches to 30 inches could come in different color and styles (straight, curly, deep wavy etc).
+
+There should be an admin that can define the sizes, colours and styles.
+
+When these orders come in, I want to put them in inventory. 
+
+Now at the point of sale (POS), customers will describe what they want and I will decide how many frontals to use, how many 8 inches packets, how many 22 inches packet, what color(s) I need to use, what style(s) etc....after all options are selected I will enter the Amount, VAT will be predefined by the admin and I want option of discount as well. Discount should be in absolute amount of percentage The system will then display the total amount. and I will then click create.
+Other information that should be collected at POS is user email and/or phone number....if the email and/or phone number is new, the system should display option of user full name....in any case, there should be an address option....if the address is already filled for the email/phone number, it will display the existing address and only the admin can change the address....if the POS needs to change the address on the spot, an admin code/password will be required. (same goes for phone number and email). other option will be pickup or delivery. If delivery is selected, a field to enter the delivery charges should be shown and must be required.
+
+The order will then enter a CREATED status, from there it can move to IN PROGRESS status, COMPLETED status (at this point, the system should check the items used in the order and remove them from inventory, DISPATCHED status and finally DELIVERED status. There should be a PAYMENT PENDING status as well...this will be in conjuction with CREATED status, the order will not be able to move to IN PROGRESS status until the PAYMENT RECIEVED status is set. all the other status can only be activated when the order is in PAYMENT RECIEVED status. Only the admin can change the status of orders. A super admin will be able to change status from CREATED to other statuses even is the order is in PAYMENT PENDING status.
+
+The system should generate an invoice and send it to the user email and/or WhatsApp when status is changed to PAYMENT RECIEVED. Admin will upload a logo and specify the company name, which will be shown on the invoice.
+
+The admin dashboard should include among the above mentioned options views to see statistics about inventory and orders...e.g sales per day, orders in different statuses, pending payment orders, inprogress orders etc
+
+Every POS operator should have a different username and password...POS operators will be created by admin....when POS operator logs in for the first time, they will be required to set a new password. Each order created will now carry the POS operator that created the order...(other information that should go with the order is created date and time)....admin should be able to sort orders by POS operator.
+
+This is what I can think of for now? Do you understand the requirement? If yes, can you think of/suggest something else I need to add to the system that I am missing?
