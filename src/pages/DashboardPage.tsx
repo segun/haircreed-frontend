@@ -14,14 +14,16 @@ const StatCard = ({ title, value, change }: { title: string; value: string; chan
 type DashboardPageProps = {
     user: User;
     setCurrentPage: (page: Page) => void;
+    onLogout: () => void;
 };
 
-export default function DashboardPage({ user, setCurrentPage }: DashboardPageProps) {
+export default function DashboardPage({ user, setCurrentPage, onLogout }: DashboardPageProps) {
   return (
     <AdminLayout 
         user={user} 
         currentPage="dashboard" 
         setCurrentPage={setCurrentPage}
+        onLogout={onLogout}
         pageTitle="Dashboard"
     >
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -40,4 +42,3 @@ export default function DashboardPage({ user, setCurrentPage }: DashboardPagePro
     </AdminLayout>
   );
 }
-

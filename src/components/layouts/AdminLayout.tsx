@@ -9,6 +9,7 @@ type AdminLayoutProps = {
   currentPage: Page;
   setCurrentPage: (page: Page) => void;
   pageTitle: string;
+  onLogout: () => void;
 };
 
 const getInitials = (name: string | undefined) => {
@@ -31,7 +32,7 @@ const SidebarLink = ({ icon, text, active, onClick }: { icon: React.ReactNode, t
   </button>
 );
 
-export default function AdminLayout({ user, children, currentPage, setCurrentPage, pageTitle }: AdminLayoutProps) {
+export default function AdminLayout({ user, children, currentPage, setCurrentPage, pageTitle, onLogout }: AdminLayoutProps) {
   
   const businessName = "HairCreed";
 
@@ -62,7 +63,7 @@ export default function AdminLayout({ user, children, currentPage, setCurrentPag
           ))}
         </nav>
         <div className="mt-auto">
-           <SidebarLink icon={<LogOut size={20} />} text="Logout" active={false} onClick={() => { /* Implement logout */ }} />
+           <SidebarLink icon={<LogOut size={20} />} text="Logout" active={false} onClick={onLogout} />
         </div>
       </div>
 
@@ -91,4 +92,3 @@ export default function AdminLayout({ user, children, currentPage, setCurrentPag
     </div>
   );
 }
-

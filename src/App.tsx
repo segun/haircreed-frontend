@@ -13,11 +13,20 @@ import OrderPage from "./pages/OrderPage";
 export type Page = 'dashboard' | 'inventory-attributes' | 'inventory' | 'orders' | 'reports' | 'users';
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      console.error("Failed to parse user from localStorage", error);
+      return null;
+    }
+  });
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
 
   const handleLoginSuccess = (userData: User) => {
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
     if (userData.requiresPasswordReset) {
       setNeedsPasswordReset(true);
@@ -34,10 +43,17 @@ function App() {
         passwordHash: newPassword,
         requiresPasswordReset: false,
       });
+      localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       setNeedsPasswordReset(false);
       setCurrentPage('dashboard');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    // Optional: redirect to login or show a logged out message
   };
 
   if (!user) {
@@ -50,21 +66,21 @@ function App() {
 
   const renderPage = () => {
     if (user?.role === 'POS_OPERATOR') {
-      return <OrderPage user={user} setCurrentPage={setCurrentPage}/>;
+      return <OrderPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
     }
     switch (currentPage) {
       case 'dashboard':
-        return <DashboardPage user={user} setCurrentPage={setCurrentPage} />;
+        return <DashboardPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
       case 'inventory-attributes':
-        return <InventoryAttributesPage user={user} setCurrentPage={setCurrentPage} />;
+        return <InventoryAttributesPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
       case 'inventory':
-        return <InventoryPage user={user} setCurrentPage={setCurrentPage} />;
+        return <InventoryPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
       case 'users':
-        return <UserManagementPage user={user} setCurrentPage={setCurrentPage}/>;
+        return <UserManagementPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
       case 'orders':
-        return <OrderPage user={user} setCurrentPage={setCurrentPage}/>;
+        return <OrderPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
       default:
-        return <DashboardPage user={user} setCurrentPage={setCurrentPage} />;
+        return <DashboardPage user={user} setCurrentPage={setCurrentPage} onLogout={handleLogout} />;
     }
   };
 

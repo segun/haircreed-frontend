@@ -11,11 +11,13 @@ import type { AttributeCategory, User } from "../types";
 type InventoryAttributesPageProps = {
     user: User;
     setCurrentPage: (page: Page) => void;
+    onLogout: () => void;
 };
 
 export default function InventoryAttributesPage({
     user,
     setCurrentPage,
+    onLogout,
 }: InventoryAttributesPageProps) {
     const [newCategoryName, setNewCategoryName] = useState("");
     const [writeError, setWriteError] = useState<string | null>(null);
@@ -70,6 +72,7 @@ export default function InventoryAttributesPage({
                 currentPage="inventory-attributes"
                 setCurrentPage={setCurrentPage}
                 pageTitle="Inventory Attributes"
+                onLogout={onLogout}
             >
                 {/* Component to add a new category */}
                 <div className="bg-white p-4 rounded-lg shadow-md mb-6">
