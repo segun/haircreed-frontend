@@ -83,9 +83,7 @@ function App() {
       <Route path="/inventory" element={<InventoryPage user={user} onLogout={handleLogout} />} />
       <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
       <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
-      {/* Add a route for reports, or a redirect */}
       <Route path="/reports" element={<div>Reports Page</div>} />
-      {/* Redirect from root to a default page */}
       <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
     </Routes>
   );
