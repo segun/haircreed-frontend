@@ -36,6 +36,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
   const [quantity, setQuantity] = useState<number | ''>('');
   const [price, setPrice] = useState<number | ''>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const VAT_RATE = 0.20;
 
@@ -58,6 +59,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     setSelectedInventoryItem(item);
     setPrice(item.costPrice || '');
     setSearchTerm('');
+    setIsDropdownOpen(false);
   };
 
   const handleAddItemToOrder = () => {
@@ -84,7 +86,8 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  const inventoryItems = (data?.InventoryItems || []).map(item => ({
+  // Normalize supplier to always be defined
+  const inventoryItems: InventoryItem[] = (data?.InventoryItems || []).map(item => ({
     ...item,
     supplier: item.supplier ?? {
       id: '',
@@ -120,25 +123,34 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
             <div className="mb-4">
               <h3 className="text-md font-medium mb-2">Add Items to Order</h3>
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for an item..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                />
-                {searchTerm && (
-                  <ul className="absolute z-10 w-full bg-white border rounded-md mt-1 max-h-60 overflow-y-auto">
-                    {filteredInventoryItems.map((item) => (
-                      <li
-                        key={item.id}
-                        onClick={() => handleSelectItem(item)}
-                        className="p-2 cursor-pointer hover:bg-gray-200"
-                      >
-                        {getInventoryItemName(item.attributes)}
-                      </li>
-                    ))}
-                  </ul>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="w-full p-2 border rounded-md text-left"
+                >
+                  {selectedInventoryItem ? getInventoryItemName(selectedInventoryItem.attributes) : "Select an item"}
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute z-10 w-full bg-white border rounded-md mt-1">
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full p-2 border-b"
+                    />
+                    <ul className="max-h-60 overflow-y-auto">
+                      {filteredInventoryItems.map((item) => (
+                        <li
+                          key={item.id}
+                          onClick={() => handleSelectItem(item)}
+                          className="p-2 cursor-pointer hover:bg-gray-200"
+                        >
+                          {getInventoryItemName(item.attributes)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
 
