@@ -155,25 +155,33 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
               </div>
 
               {selectedInventoryItem && (
-                <div className="mt-4 grid grid-cols-4 gap-4 items-center">
-                  <div className="col-span-2">
-                    <p>Selected: {getInventoryItemName(selectedInventoryItem.attributes)}</p>
+                <div className="mt-4 p-4 border rounded-md bg-gray-50">
+                  <div>
+                    <p><span className="font-medium">Selected:</span> {getInventoryItemName(selectedInventoryItem.attributes)}</p>
                     <p className="text-sm text-gray-500">Available: {selectedInventoryItem.quantity}</p>
                   </div>
-                  <input
-                    type="number"
-                    placeholder="Qty"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="p-2 border rounded-md"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="p-2 border rounded-md"
-                  />
+                  <div className="mt-4 grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Quantity</label>
+                      <input
+                        type="number"
+                        id="quantity"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="mt-1 p-2 block w-full border rounded-md"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
+                      <input
+                        type="number"
+                        id="price"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                        className="mt-1 p-2 block w-full border rounded-md"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
