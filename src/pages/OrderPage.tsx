@@ -160,7 +160,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                     <p><span className="font-medium">Selected:</span> {getInventoryItemName(selectedInventoryItem.attributes)}</p>
                     <p className="text-sm text-gray-500">Available: {selectedInventoryItem.quantity}</p>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div className="mt-4 grid grid-cols-3 gap-4">
                     <div>
                       <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">Quantity</label>
                       <input
@@ -180,6 +180,15 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                         onChange={(e) => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
                         className="mt-1 p-2 block w-full border rounded-md"
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="total" className="block text-sm font-medium text-gray-700">Total</label>
+                      <div
+                        id="total"
+                        className="mt-1 p-2 block w-full border rounded-md bg-gray-100"
+                      >
+                        ${(Number(quantity) * Number(price)).toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 </div>
