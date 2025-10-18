@@ -48,7 +48,8 @@ export const _schema = i.schema({
       fullName: i.string(),
       email: i.string().unique(),
       phoneNumber: i.string().unique(),
-      address: i.string(),
+      headSize: i.string().optional(),
+      addresses: i.json().optional(),
       createdAt: i.number(),
     }),    
     Suppliers: i.entity({
