@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
-import type { User, AttributeCategory } from '../types';
-import { getCategories } from '../api/inventoryAttributes';
+import type { User, AttributeItem } from '../types';
+import db from '../instant';
 
 interface OrderPageProps {
   user: User;
@@ -13,9 +13,17 @@ interface OrderItem {
   name: string;
   price: number;
 }
+
 const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
-  const [attributes, setAttributes] = useState<AttributeCategory[]>([]);
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const { isLoading, error, data } = db.useQuery({
+    InventoryItems: {
+        attributes: { category: {} },
+        supplier: {},
+    },
+  });
+
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [orderType, setOrderType] = useState<'pickup' | 'delivery'>('pickup');
   const [deliveryCharge, setDeliveryCharge] = useState(0);
@@ -38,71 +46,90 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
 
   }, [orderItems, discount, orderType, deliveryCharge]);
 
-  useEffect(() => {
-    const fetchAttributes = async () => {
-      try {
-        const fetchedAttributes = await getCategories();
-        setAttributes(fetchedAttributes);
-      } catch (error) {
-        console.error('Error fetching attributes:', error);
-      }
-    };
-
-    fetchAttributes();
-  }, []);
-
-  const handleOptionChange = (categoryId: string, itemId: string) => {
-    setSelectedOptions((prev) => ({ ...prev, [categoryId]: itemId }));
+  const handleSelectItem = (itemId: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
+    );
   };
 
+  const getInventoryItemName = (attributes: AttributeItem[]) => {
+    return attributes.map((attr: AttributeItem) => attr.name).join(' - ');
+  }
+
   const handleAddToOrder = () => {
-    // This is a placeholder. In a real app, you'd get the product details based on selectedOptions
-    const newItem: OrderItem = {
-      id: Date.now().toString(),
-      name: 'Dummy Product',
-      price: Math.floor(Math.random() * 100) + 20, // Random price between 20 and 120
-    };
-    setOrderItems((prev) => [...prev, newItem]);
+    if (!data) return;
+    const { InventoryItems } = data;
+    const itemsToAdd: OrderItem[] = InventoryItems
+      .filter((item) => selectedItems.includes(item.id))
+      .map((item) => ({
+        id: item.id,
+        name: getInventoryItemName(item.attributes),
+        price: item.costPrice || 0,
+      }));
+
+    setOrderItems((prev) => [...prev, ...itemsToAdd]);
+    setSelectedItems([]);
+    setNotes('');
   };
 
   const handleRemoveItem = (itemId: string) => {
     setOrderItems((prev) => prev.filter((item) => item.id !== itemId));
   };
 
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  const inventoryItems = data?.InventoryItems || [];
+
   return (
     <AdminLayout user={user} onLogout={onLogout} pageTitle="Order">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="text-lg font-medium mb-4">Order Creation</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {attributes.map((category) => (
-                <div key={category.id}>
-                  <label htmlFor={`category-${category.id}`} className="block text-sm font-medium text-gray-700">{category.title}</label>
-                  <select
-                    id={`category-${category.id}`}
-                    name={category.title}
-                    value={selectedOptions[category.id] || ''}
-                    onChange={(e) => handleOptionChange(category.id, e.target.value)}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                  >
-                    <option value="">Select {category.title}</option>
-                    {category.items.map((item) => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
-                  </select>
-                </div>
-              ))}
+            <h2 className="text-lg font-medium mb-4">Create Order</h2>
+
+            <div className="mb-4">
+              <h3 className="text-md font-medium mb-2">Select Items from Inventory</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 h-64 overflow-y-auto p-2 border rounded-md">
+                {inventoryItems.map((item) => (
+                  <div key={item.id} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={`item-${item.id}`}
+                      checked={selectedItems.includes(item.id)}
+                      onChange={() => handleSelectItem(item.id)}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor={`item-${item.id}`} className="ml-2 block text-sm text-gray-900">
+                      {getInventoryItemName(item.attributes)}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
+
+            <div className="mb-4">
+              <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Notes/Description</label>
+              <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
+            </div>
+
             <div className="mt-6">
               <button
                 type="button"
                 onClick={handleAddToOrder}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                disabled={selectedItems.length === 0}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 Add to Order
               </button>
             </div>
+
             <div className="mt-8">
               <h3 className="text-lg font-medium mb-4">Current Order</h3>
               <div className="space-y-4">

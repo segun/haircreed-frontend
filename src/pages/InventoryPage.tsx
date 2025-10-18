@@ -10,7 +10,7 @@ import { createSupplier } from '../api/suppliers';
 import Modal from '../components/common/Modal';
 import SupplierForm from '../components/admin/SupplierForm';
 
-const InventoryPage: React.FC<any> = ({ user }) => {
+const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
     const { isLoading, error, data } = db.useQuery({
         InventoryItems: {
             attributes: { category: {} },
@@ -99,7 +99,7 @@ const InventoryPage: React.FC<any> = ({ user }) => {
     };
 
     return (
-        <AdminLayout pageTitle="Inventory Management" user={user}>
+        <AdminLayout pageTitle="Inventory Management" user={user} onLogout={onLogout}>
             <Modal
                 isOpen={isSupplierModalOpen}
                 onClose={() => setIsSupplierModalOpen(false)}
