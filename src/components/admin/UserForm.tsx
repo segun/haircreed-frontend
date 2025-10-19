@@ -130,7 +130,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
                             id="passwordHash"
                             value={formData.passwordHash}
                             onChange={handleChange}
-                            className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:ring-zinc-500 sm:text-sm"
+                            className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:ring-zinc-500 sm:text-sm"
                         />
                         <button
                             type="button"

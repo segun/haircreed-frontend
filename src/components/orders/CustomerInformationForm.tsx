@@ -33,7 +33,7 @@ const CustomerInformationForm: React.FC = () => {
             id="email"
             value={customer.email}
             onChange={handleChange}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
         </div>
         <div>
@@ -42,10 +42,7 @@ const CustomerInformationForm: React.FC = () => {
           </label>
           <input
             type="tel"
-            id="phone"
-            value={customer.phone}
-            onChange={handleChange}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
         </div>
         <div>
@@ -57,7 +54,7 @@ const CustomerInformationForm: React.FC = () => {
             id="name"
             value={customer.name}
             onChange={handleChange}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
         </div>
         <div>
@@ -69,7 +66,7 @@ const CustomerInformationForm: React.FC = () => {
             id="headSize"
             value={customer.headSize}
             onChange={handleChange}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
         </div>
         <div>
@@ -81,7 +78,7 @@ const CustomerInformationForm: React.FC = () => {
             rows={3}
             value={customer.address}
             onChange={handleChange}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
           <div className="flex items-center mt-2">
             <input
@@ -90,7 +87,7 @@ const CustomerInformationForm: React.FC = () => {
               type="checkbox"
               checked={customer.isPrimary}
               onChange={handleChange}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border border-gray-300 rounded"
             />
             <label htmlFor="isPrimary" className="ml-2 block text-sm text-gray-900">
               Set as preferred address
