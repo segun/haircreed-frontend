@@ -22,6 +22,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       attributes: { category: {} },
       supplier: {},
     },
+    AppSettings: {},
   });
 
   const [notes, setNotes] = useState('');
@@ -39,18 +40,18 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [price, setPrice] = useState<number | ''>('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const VAT_RATE = 0.20;
+  const vatRate = data?.AppSettings?.[0]?.settings?.vatRate || 0;
 
   useEffect(() => {
     const newSubtotal = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
     setSubtotal(newSubtotal);
 
-    const newVat = newSubtotal * VAT_RATE;
+    const newVat = newSubtotal * (vatRate / 100);
     setVat(newVat);
 
     const newTotal = newSubtotal + newVat - discount + (orderType === 'delivery' ? deliveryCharge : 0);
     setTotalAmount(newTotal);
-  }, [orderItems, discount, orderType, deliveryCharge]);
+  }, [orderItems, discount, orderType, deliveryCharge, vatRate]);
 
   const getInventoryItemName = (attributes: AttributeItem[]) => {
     return attributes.map((attr: AttributeItem) => attr.name).join(' - ');
@@ -290,7 +291,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                 <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span>VAT ({(VAT_RATE * 100).toFixed(0)}%)</span>
+                <span>VAT ({vatRate}%)</span>
                 <span>${vat.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">

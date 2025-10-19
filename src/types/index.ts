@@ -20,6 +20,15 @@ export type InventoryItemWithDetails = Omit<InventoryItem, 'attributes' | 'suppl
     supplier: Supplier;
 };
 
+export type AppSettings = {
+    id: string;
+    settings: Settings;
+}
+
+export type Settings = {
+    vatRate: number;
+}
+
 export type Page =
     | 'dashboard'
     | 'orders'

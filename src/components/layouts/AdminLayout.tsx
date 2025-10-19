@@ -51,6 +51,7 @@ export default function AdminLayout({ user, children, pageTitle, onLogout }: Adm
     { name: 'Reports', path: '/reports', icon: <BarChart2 size={20} /> },
     { name: 'Users', path: '/users', icon: <Users size={20} /> },
     { name: 'Attributes', path: '/inventory-attributes', icon: <Settings size={20} /> },
+    { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
   ];
 
   return (

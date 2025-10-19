@@ -59,7 +59,7 @@ className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 fo
         </div>
         <div>
           <label htmlFor="headSize" className="block text-sm font-medium text-gray-700">
-            Head Size (in)
+            Head Size
           </label>
           <input
             type="text"

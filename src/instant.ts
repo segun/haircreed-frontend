@@ -2,8 +2,10 @@ import { i, init } from '@instantdb/react';
 
 export const _schema = i.schema({
   entities: {
+    AppSettings: i.entity({
+      settings: i.json(),
+    }),
     Users: i.entity({
-      id: i.string().unique(),
       fullName: i.string(),
       username: i.string().unique(),
       email: i.string().unique(),
@@ -14,19 +16,16 @@ export const _schema = i.schema({
       updatedAt: i.number(),
     }),
     AttributeCategory: i.entity({
-      id: i.string().unique(),
       title: i.string().unique(),
       createdAt: i.number(),
       updatedAt: i.number(),
     }),
     AttributeItem: i.entity({
-      id: i.string().unique(),
       name: i.string(),
       createdAt: i.number(),
       updatedAt: i.number(),
     }),
     Orders: i.entity({
-      id: i.string().unique(),
       orderNumber: i.string(),
       items: i.json(),
       amount: i.number(),
@@ -44,7 +43,6 @@ export const _schema = i.schema({
       statusHistory: i.json(),
     }),
     Customers: i.entity({
-      id: i.string().unique(),
       fullName: i.string(),
       email: i.string().unique(),
       phoneNumber: i.string().unique(),
@@ -53,7 +51,6 @@ export const _schema = i.schema({
       createdAt: i.number(),
     }),    
     Suppliers: i.entity({
-      id: i.string().unique(),
       name: i.string(),
       contactPerson: i.string().optional(),
       email: i.string().optional(),
@@ -63,7 +60,6 @@ export const _schema = i.schema({
       createdAt: i.number(),
     }),
     InventoryItems: i.entity({
-      id: i.string().unique(),
       quantity: i.number(),
       costPrice: i.number().optional(),
       lastStockedAt: i.number(),
