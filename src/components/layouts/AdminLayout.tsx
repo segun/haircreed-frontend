@@ -40,6 +40,8 @@ const LogoutButton = ({ icon, text, onClick }: { icon: React.ReactNode, text: st
   </button>
 );
 
+import { Toaster } from 'react-hot-toast';
+
 export default function AdminLayout({ user, children, pageTitle, onLogout }: AdminLayoutProps) {
   const location = useLocation();
   const businessName = "HairCreed";
@@ -56,6 +58,7 @@ export default function AdminLayout({ user, children, pageTitle, onLogout }: Adm
 
   return (
     <div className="min-h-screen bg-zinc-100">
+      <Toaster position="top-right" />
       <div className="fixed inset-y-0 left-0 bg-zinc-800 w-64 p-4 z-30 flex flex-col">
         <div className="flex items-center justify-center h-16 mb-6">
           <h1 className="text-2xl font-bold text-white">{businessName}</h1>

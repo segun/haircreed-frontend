@@ -47,7 +47,12 @@ export const _schema = i.schema({
       email: i.string().unique(),
       phoneNumber: i.string().unique(),
       headSize: i.string().optional(),
-      addresses: i.json().optional(),
+      createdAt: i.number(),
+    }),
+    CustomerAddress: i.entity({
+      customerId: i.string(),
+      address: i.string(),
+      isPrimary: i.boolean(),
       createdAt: i.number(),
     }),    
     Suppliers: i.entity({
@@ -77,6 +82,14 @@ export const _schema = i.schema({
     InventoryItemAttributes: {
       forward: { on: 'InventoryItems', has: 'many', label: 'attributes' },
       reverse: { on: 'AttributeItem', has: 'many', label: 'inventoryItems' },
+    },
+    CustomerCustomerAddresses: {
+      forward: { on: 'Customers', has: 'many', label: 'addresses' },
+      reverse: { on: 'CustomerAddress', has: 'one', label: 'customer' },
+    },
+    CustomerOrders: {
+      forward: { on: 'Customers', has: 'many', label: 'orders' },
+      reverse: { on: 'Orders', has: 'one', label: 'customer' },
     },
   },
 });

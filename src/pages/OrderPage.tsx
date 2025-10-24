@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
-import type { User, AttributeItem, InventoryItem } from '../types';
+import type { User, AttributeItem, InventoryItem, Customer, CustomerAddress, CustomerSearchType } from '../types';
 import db from '../instant';
+import { createCustomer, createCustomerAddress } from '../api/customers';
+import { toast } from 'react-hot-toast';
 import CustomerInformationForm from '../components/orders/CustomerInformationForm';
+import { createOrder } from '../api/orders';
 
 interface OrderPageProps {
   user: User;
@@ -32,7 +35,99 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [discount, setDiscount] = useState(0);
   const [subtotal, setSubtotal] = useState(0);
   const [vat, setVat] = useState(0);
+  const [customer, setCustomer] = useState<Partial<Customer>>({});
+  const [customerQuery, setCustomerQuery] = useState<{ query: string; type: CustomerSearchType } | null>(null);
+
+  const handleFindCustomer = (query: string, type: CustomerSearchType) => {
+    setCustomerQuery({ query, type });
+  };
+
+  const handleSaveAddress = async (address: Partial<CustomerAddress>) => {
+    if (!customer.id) {
+      toast.error('Please find or create a customer first.');
+      return;
+    }
+    try {
+      const newAddress = await createCustomerAddress({ ...address, customerId: customer.id });
+      setCustomer(prev => ({ ...prev, addresses: [...(prev.addresses || []), newAddress] }));
+      toast.success('Address saved successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save address');
+    }
+  };
+
+  const { data: customerData } = db.useQuery({
+    Customers: {
+      $: customerQuery ? { where: { [customerQuery.type]: customerQuery.query } } : { where: { id: '' } },
+      addresses: {},
+      orders: {},
+    }
+  });
+
+  useEffect(() => {
+    if (customerData?.Customers?.length) {
+      setCustomer(customerData.Customers[0]);
+      toast.success('Customer found');
+    } else if (customerQuery) {
+      // toast.error('Customer not found');
+    }
+  }, [customerData, customerQuery]);
+
   const [totalAmount, setTotalAmount] = useState(0);
+
+  const handleCreateOrder = async () => {
+    let customerToUse = customer;
+    if (!customer.id) {
+      if (customerData?.Customers?.length) {
+        customerToUse = customerData.Customers[0];
+      } else {
+        try {
+          const newCustomer = await createCustomer(customer);
+          customerToUse = newCustomer;
+          toast.success('Customer created successfully');
+        } catch (error) {
+          console.error(error);
+          toast.error('Failed to create customer');
+          return;
+        }
+      }
+    }
+
+    if (!customerToUse.id) {
+      toast.error('Customer could not be created or found');
+      return;
+    }
+
+    const orderPayload = {
+      customerId: customerToUse.id,
+      items: orderItems.map(item => ({ id: item.id, quantity: item.quantity, price: item.price })),
+      status: 'CREATED' as const,
+      notes: notes,
+      orderType: orderType,
+      deliveryCharge: deliveryCharge,
+      discount: discount,
+      vat: vat,
+    };
+
+    try {
+      await createOrder(orderPayload);
+      toast.success('Order created successfully');
+      setOrderItems([]);
+      setCustomer({});
+      setNotes('');
+      setDiscount(0);
+      setDeliveryCharge(0);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to create order');
+    }
+  };
+
+  const handleCustomerChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setCustomer((prev) => ({ ...prev, [id]: value }));
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItem | null>(null);
@@ -241,7 +336,12 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
           </div>
         </div>
         <div>
-          <CustomerInformationForm />
+          <CustomerInformationForm
+            customer={customer}
+            handleChange={handleCustomerChange}
+            onFindCustomer={handleFindCustomer}
+            onSaveAddress={handleSaveAddress}
+          />
           <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
             <h2 className="text-lg font-medium mb-4">Order Options</h2>
             <div className="space-y-4">
@@ -314,7 +414,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                 <span>Total</span>
                 <span>${totalAmount.toFixed(2)}</span>
               </div>
-              <button className="w-full mt-6 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              <button onClick={handleCreateOrder} className="w-full mt-6 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                 Create Order
               </button>
             </div>

@@ -29,9 +29,18 @@ export type Settings = {
     vatRate: number;
 }
 
+export type Order = InstaQLEntity<Schema, 'Orders'>;
+export type CustomerAddress = InstaQLEntity<Schema, 'CustomerAddress'>;
+export type Customer = InstaQLEntity<Schema, 'Customers'> & {
+    orders: Order[];
+    addresses: CustomerAddress[];
+};
+
 export type Page =
     | 'dashboard'
     | 'orders'
     | 'inventory'
     | 'inventory-attributes'
     | 'customers';
+
+  export type CustomerSearchType = 'email' | 'phoneNumber' | 'headSize';
