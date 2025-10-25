@@ -9,6 +9,7 @@ import InventoryItemTable from '../components/admin/InventoryItemTable';
 import { createSupplier } from '../api/suppliers';
 import Modal from '../components/common/Modal';
 import SupplierForm from '../components/admin/SupplierForm';
+import LoadingIndicator from '../components/common/LoadingIndicator';
 
 const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
     const { isLoading, error, data } = db.useQuery({
@@ -85,11 +86,14 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
     };
 
     const handleDelete = async (itemId: string) => {
+        setIsSubmitting(true);
         setWriteError(null);
         try {
             await deleteInventoryItem(itemId);
         } catch (err) {
             setWriteError((err as Error).message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -100,6 +104,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
 
     return (
         <AdminLayout pageTitle="Inventory Management" user={user} onLogout={onLogout}>
+            {(isSubmitting || isSubmittingSupplier) && <LoadingIndicator />}
             <Modal
                 isOpen={isSupplierModalOpen}
                 onClose={() => setIsSupplierModalOpen(false)}
