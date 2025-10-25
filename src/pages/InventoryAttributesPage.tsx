@@ -6,6 +6,7 @@ import AdminLayout from "../components/layouts/AdminLayout";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { createCategory, deleteCategory as apiDeleteCategory } from "../api/inventoryAttributes";
 import type { AttributeCategory, User } from "../types";
+import LoadingIndicator from "../components/common/LoadingIndicator";
 
 type InventoryAttributesPageProps = {
     user: User;
@@ -19,6 +20,7 @@ export default function InventoryAttributesPage({
     const [newCategoryName, setNewCategoryName] = useState("");
     const [writeError, setWriteError] = useState<string | null>(null);
     const [categoryToDelete, setCategoryToDelete] = useState<AttributeCategory | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const { isLoading, error, data } = db.useQuery({
         AttributeCategory: {
@@ -29,12 +31,15 @@ export default function InventoryAttributesPage({
 
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
+        setIsProcessing(true);
         try {
             setWriteError(null);
             await createCategory(newCategoryName);
             setNewCategoryName("");
         } catch (err) {
             setWriteError((err as Error).message);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -44,12 +49,15 @@ export default function InventoryAttributesPage({
 
     const confirmDeleteCategory = async () => {
         if (!categoryToDelete) return;
+        setIsProcessing(true);
         try {
             setWriteError(null);
             await apiDeleteCategory(categoryToDelete.id);
             setCategoryToDelete(null);
         } catch (err) {
             setWriteError((err as Error).message);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -69,6 +77,7 @@ export default function InventoryAttributesPage({
                 pageTitle="Inventory Attributes"
                 onLogout={onLogout}
             >
+                {isProcessing && <LoadingIndicator />}
                 {/* Component to add a new category */}
                 <div className="bg-white p-4 rounded-lg shadow-md mb-6">
                     <h3 className="text-lg font-semibold text-zinc-800 mb-2">

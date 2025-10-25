@@ -8,6 +8,7 @@ import {
 import ConfirmDialog from "../common/ConfirmDialog";
 import type { AttributeCategory, AttributeItem } from "../../types";
 import Tooltip from "../common/Tooltip";
+import LoadingIndicator from "../common/LoadingIndicator";
 
 type AttributeManagerProps = {
   category: AttributeCategory;
@@ -24,9 +25,11 @@ export default function AttributeManager({
   const [editingItem, setEditingItem] = useState<AttributeItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<AttributeItem | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAddItem = async () => {
     if (!newItemName.trim()) return;
+    setIsLoading(true);
     try {
       setError(null);
       await createItem(category.id, newItemName);
@@ -34,6 +37,8 @@ export default function AttributeManager({
       onUpdate(); // Refetch categories
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -43,6 +48,7 @@ export default function AttributeManager({
 
   const confirmDeleteItem = async () => {
     if (!itemToDelete) return;
+    setIsLoading(true);
     try {
       setError(null);
       await apiDeleteItem(itemToDelete.id);
@@ -50,11 +56,14 @@ export default function AttributeManager({
       setItemToDelete(null);
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUpdateItem = async () => {
     if (!editingItem || !editingItem.name.trim()) return;
+    setIsLoading(true);
     try {
       setError(null);
       await updateItem(editingItem.id, editingItem.name);
@@ -62,8 +71,22 @@ export default function AttributeManager({
       onUpdate(); // Refetch categories
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleDeleteCategory = async () => {
+    setIsLoading(true);
+    try {
+      setError(null);
+      onDeleteCategory(category.id);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <>
@@ -75,8 +98,9 @@ export default function AttributeManager({
         onClose={() => setItemToDelete(null)}
       />
       <div className="bg-white p-6 rounded-lg shadow-md relative">
+        {isLoading && <LoadingIndicator />}
         <button
-          onClick={() => onDeleteCategory(category.id)}
+          onClick={handleDeleteCategory}
           className="absolute top-2 right-2 p-1 text-zinc-400 hover:text-red-600 hover:bg-red-100 rounded-full"
           title={`Delete ${category.title} category`}
         >

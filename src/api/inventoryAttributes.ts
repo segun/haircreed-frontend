@@ -6,12 +6,6 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API
 // Attribute Categories
 // ---
 
-export const getCategories = async (): Promise<AttributeCategory[]> => {
-  const response = await fetch(`${BASE_URL}/categories`);
-  if (!response.ok) throw new Error('Failed to fetch categories');
-  return response.json();
-};
-
 export const createCategory = async (title: string): Promise<AttributeCategory> => {
   const response = await fetch(`${BASE_URL}/categories`, {
     method: 'POST',
