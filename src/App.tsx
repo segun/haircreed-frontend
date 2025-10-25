@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
@@ -22,32 +22,11 @@ function App() {
       return null;
     }
   });
-  const [needsPasswordReset, setNeedsPasswordReset] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    if (user && user.requiresPasswordReset) {
-      setNeedsPasswordReset(true);
-    } else if (user && location.pathname === '/') {
-        if (user.role === 'POS_OPERATOR') {
-            navigate('/orders');
-        } else {
-            navigate('/dashboard');
-        }
-    }
-  }, [user, navigate, location.pathname]);
-
+  
   const handleLoginSuccess = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    if (userData.requiresPasswordReset) {
-      setNeedsPasswordReset(true);
-    } else if (userData.role === 'POS_OPERATOR') {
-      navigate('/orders');
-    } else {
-      navigate('/dashboard');
-    }
   };
 
   const handlePasswordReset = async (newPassword: string) => {
@@ -58,7 +37,6 @@ function App() {
       });
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-      setNeedsPasswordReset(false);
       navigate('/dashboard');
     }
   };
@@ -73,7 +51,7 @@ function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
-  if (needsPasswordReset) {
+  if (user.requiresPasswordReset) {
     return <PasswordResetPage onPasswordReset={handlePasswordReset} />;
   }
 
@@ -85,7 +63,7 @@ function App() {
       <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
       <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
       <Route path="/reports" element={<div>Reports Page</div>} />
-      <Route path="/settings" element={<AppSettingsPage />} />
+      <Route path="/settings" element={<AppSettingsPage user={user} onLogout={handleLogout}/>} />
       <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
     </Routes>
   );
