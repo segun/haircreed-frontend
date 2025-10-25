@@ -5,6 +5,7 @@ import AdminLayout from "../components/layouts/AdminLayout";
 import UserForm from "../components/admin/UserForm";
 import UserTable from "../components/admin/UserTable";
 import db from "../instant";
+import LoadingIndicator from "../components/common/LoadingIndicator";
 
 type UserManagementPageProps = {
     user: User;
@@ -39,7 +40,12 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
     };
 
     const handleDeleteUser = async (userId: string) => {
-        await deleteUser(userId);
+        setIsSubmitting(true);
+        try {
+            await deleteUser(userId);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleCancel = () => {
@@ -50,6 +56,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
     return (
         <AdminLayout pageTitle="User Management" user={user || undefined} onLogout={onLogout}>
             <div className="p-4">
+                {isSubmitting && <LoadingIndicator />}
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">User Management</h1>
                     <button
