@@ -1,8 +1,8 @@
-import type { CustomerAddress, User } from '../types';
+import type { Customer, CustomerAddress } from '../types';
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_CUSTOMERS_ENDPOINT}`
 
-export const createCustomer = async (customer: Partial<User>): Promise<User> => {
+export const createCustomer = async (customer: Partial<Customer> & {newAddress: Partial<CustomerAddress> | null}): Promise<Customer> => {
     const response = await fetch(BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -12,15 +12,13 @@ export const createCustomer = async (customer: Partial<User>): Promise<User> => 
     return response.json();
 };
 
-export const createCustomerAddress = async (address: Partial<CustomerAddress>): Promise<CustomerAddress> => {
-    console.log('Creating address:', address);
-    const response = await fetch(`${BASE_URL}/addresses`, {
-        method: 'POST',
+
+export const updateCustomer = async (customerId: string, customer: Partial<Customer> & {newAddress: Partial<CustomerAddress> | null}): Promise<Customer> => {
+    const response = await fetch(`${BASE_URL}/${customerId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(address),
+        body: JSON.stringify(customer),
     });
-    if (!response.ok) throw new Error('Failed to create customer address');
-    return response.json();    
-}
-
-
+    if (!response.ok) throw new Error('Failed to update customer');
+    return response.json();
+};

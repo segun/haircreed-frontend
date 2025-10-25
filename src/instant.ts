@@ -50,7 +50,6 @@ export const _schema = i.schema({
       createdAt: i.number(),
     }),
     CustomerAddress: i.entity({
-      customerId: i.string(),
       address: i.string(),
       isPrimary: i.boolean(),
       createdAt: i.number(),

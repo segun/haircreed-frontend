@@ -13,21 +13,31 @@ interface CustomerInformationFormProps {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
   onFindCustomer: (query: string, type: CustomerSearchType) => void;
-  onSaveAddress: (address: Partial<CustomerAddress>) => void;
+  handleCustomerNewAddressChange: (address: Partial<CustomerAddress> | null) => void;
 }
 
 const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
   customer,
   handleChange,
   onFindCustomer,
-  onSaveAddress,
+  handleCustomerNewAddressChange,
 }) => {
   const [selectedAddress, setSelectedAddress] =
     useState<Partial<CustomerAddress> | null>(null);
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
+  const [hasAddress, setHasAddress] = useState(false);
+
+  useEffect(() => {
+    if (customer && customer.addresses && customer.addresses.length > 0) {
+      setHasAddress(true);
+    } else {
+      setHasAddress(false);
+    }
+  }, [customer]);
 
   useEffect(() => {
     if (customer.addresses && customer.addresses.length > 0) {
+      setHasAddress(true);
       const primaryAddress =
         customer.addresses.find((a) => a.isPrimary) || customer.addresses[0];
       setSelectedAddress(primaryAddress);
@@ -46,13 +56,25 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
 
   const handleAddNewAddress = () => {
     setIsAddingNewAddress(true);
+    setHasAddress(false);
     setSelectedAddress({ address: "", isPrimary: false });
+  };
+
+  const onSaveAddress = async (address: Partial<CustomerAddress>) => {
+    try {
+      handleCustomerNewAddressChange({
+        address: address.address,
+        isPrimary: address.isPrimary,
+      });
+      setIsAddingNewAddress(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleSaveAddress = () => {
     if (selectedAddress) {
       onSaveAddress(selectedAddress);
-      setIsAddingNewAddress(false);
     }
   };
 
@@ -61,6 +83,7 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
     const primaryAddress =
       customer.addresses?.find((a) => a.isPrimary) || customer.addresses?.[0];
     setSelectedAddress(primaryAddress || null);
+    handleCustomerNewAddressChange(null);
   };
 
   const addressToString = (address: Partial<CustomerAddress>) => {
@@ -98,15 +121,15 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
         </div>
         <div>
           <label
-            htmlFor="phone"
+            htmlFor="phoneNumber"
             className="block text-sm font-medium text-gray-700"
           >
-            Phone
+            Phone Number
           </label>
           <div className="mt-1 flex rounded-md shadow-sm">
             <input
               type="tel"
-              id="phone"
+              id="phoneNumber"
               value={customer.phoneNumber}
               onChange={handleChange}
               className="flex-1 block w-full rounded-none rounded-l-md pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -125,14 +148,14 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
         </div>
         <div>
           <label
-            htmlFor="name"
+            htmlFor="fullName"
             className="block text-sm font-medium text-gray-700"
           >
             Full Name
           </label>
           <input
             type="text"
-            id="name"
+            id="fullName"
             value={customer.fullName}
             onChange={handleChange}
             className="flex-1 block w-full rounded-none rounded-l-md pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
@@ -170,6 +193,7 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
                 );
                 setSelectedAddress(selected || null);
                 setIsAddingNewAddress(false);
+                handleCustomerNewAddressChange(null);        
               }}
               value={selectedAddress?.id || ""}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
@@ -203,7 +227,7 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
             rows={3}
             value={selectedAddress?.address || ""}
             onChange={handleAddressChange}
-            readOnly={!isAddingNewAddress}
+            readOnly={!isAddingNewAddress || hasAddress}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
           <div className="flex items-center mt-2">
@@ -213,7 +237,7 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
               type="checkbox"
               checked={selectedAddress?.isPrimary || false}
               onChange={handleIsPrimaryChange}
-              disabled={!isAddingNewAddress}
+              disabled={!isAddingNewAddress || hasAddress}
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border border-gray-300 rounded"
             />
             <label
@@ -231,7 +255,7 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
                 onClick={handleSaveAddress}
                 className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
               >
-                Save Address
+                Done
               </button>
             </Tooltip>
             <Tooltip content="Cancel adding address">

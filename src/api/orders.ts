@@ -11,6 +11,9 @@ type OrderPayload = {
     deliveryCharge: number;
     discount: number;
     vat: number;
+    orderNumber: string;
+    totalAmount: number;
+    vatRate: number;    
 };
 
 export const createOrder = async (order: OrderPayload): Promise<Order> => {
