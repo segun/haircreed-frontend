@@ -198,6 +198,15 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     setCustomer((prev) => ({ ...prev, newAddress: address }));
   };
 
+  const isCustomerInfoComplete = () => {
+    return (
+      customer.fullName &&
+      customer.email &&
+      customer.phoneNumber &&
+      customer.headSize
+    );
+  }
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInventoryItem, setSelectedInventoryItem] =
     useState<InventoryItem | null>(null);
@@ -556,7 +565,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                 </div>
                 <button
                   onClick={handleCreateOrder}
-                  disabled={!customer.id || orderItems.length === 0}
+                  disabled={!isCustomerInfoComplete() || orderItems.length === 0}
                   className="w-full mt-6 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Create Order
