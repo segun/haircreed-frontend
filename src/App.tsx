@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
@@ -23,7 +23,26 @@ function App() {
     }
   });
   const navigate = useNavigate();
-  
+  const location = useLocation();
+
+  useEffect(() => {
+    if (user && user.requiresPasswordReset) {
+      navigate('/password-reset');
+      return;
+    }
+
+    if (user) {
+      const isPosOperator = user.role === 'POS_OPERATOR';
+      const currentPath = location.pathname;
+
+      if (isPosOperator && currentPath !== '/orders') {
+        navigate('/orders');
+      } else if (currentPath === '/') {
+        navigate('/dashboard');
+      }
+    }
+  }, [user, location.pathname, navigate]);
+
   const handleLoginSuccess = (userData: User) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
