@@ -29,7 +29,10 @@ export type Settings = {
     vatRate: number;
 }
 
-export type Order = InstaQLEntity<Schema, 'Orders'>;
+export type Order = InstaQLEntity<Schema, 'Orders'> & {
+    customer: Customer;
+    posOperator: User;
+};
 export type CustomerAddress = InstaQLEntity<Schema, 'CustomerAddress'>;
 export type Customer = InstaQLEntity<Schema, 'Customers'> & {
     orders: Order[];

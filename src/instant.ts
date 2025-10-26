@@ -40,6 +40,7 @@ export const _schema = i.schema({
       paymentStatus: i.string(),
       deliveryMethod: i.string(),
       createdAt: i.number(),
+      updatedAt: i.number(),
       statusHistory: i.json(),
     }),
     Customers: i.entity({
@@ -89,6 +90,10 @@ export const _schema = i.schema({
     CustomerOrders: {
       forward: { on: 'Customers', has: 'many', label: 'orders' },
       reverse: { on: 'Orders', has: 'one', label: 'customer' },
+    },
+    UserOrders: {
+      forward: { on: 'Users', has: 'many', label: 'orders' },
+      reverse: { on: 'Orders', has: 'one', label: 'posOperator' },
     },
   },
 });

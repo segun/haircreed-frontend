@@ -101,7 +101,8 @@ export default function AdminLayout({
   const navigation = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
     { name: "Inventory", path: "/inventory", icon: <Package size={20} /> },
-    { name: "Orders", path: "/orders", icon: <ShoppingCart size={20} /> },
+    { name: "Point of Sale", path: "/orders", icon: <ShoppingCart size={20} /> },
+    { name: "View Orders", path: "/view-orders", icon: <ShoppingCart size={20} /> },
     { name: "Reports", path: "/reports", icon: <BarChart2 size={20} /> },
     { name: "Users", path: "/users", icon: <Users size={20} /> },
     {

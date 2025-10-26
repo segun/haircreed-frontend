@@ -29,7 +29,11 @@ interface OrderItem {
 
 const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const { isLoading: isDataLoading, error, data } = db.useQuery({
+  const {
+    isLoading: isDataLoading,
+    error,
+    data,
+  } = db.useQuery({
     InventoryItems: {
       attributes: { category: {} },
       supplier: {},
@@ -83,7 +87,9 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       });
 
       if (data.Customers && data.Customers.length > 0) {
-        const found = data.Customers[0] || {};
+        const found = (data.Customers[0] || {}) as Partial<Customer> & {
+          newAddress?: Partial<CustomerAddress> | null;
+        };
         setCustomer(found);
         toast.success("Customer found");
         return found;
@@ -112,8 +118,12 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (customerData?.Customers?.length) {
-      setCustomer(customerData.Customers[0]);
-    } 
+      setCustomer(
+        customerData.Customers[0] as Partial<Customer> & {
+          newAddress?: Partial<CustomerAddress> | null;
+        }
+      );
+    }
   }, [customerData]);
 
   const [totalAmount, setTotalAmount] = useState(0);
@@ -123,7 +133,9 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     let customerToUse = customer;
 
     if (customerData?.Customers?.length) {
-      customerToUse = customerData.Customers[0];
+      customerToUse = customerData.Customers[0] as Partial<Customer> & {
+        newAddress?: Partial<CustomerAddress> | null;
+      };
     }
 
     if (!customerToUse || !customerToUse.id) {
@@ -157,6 +169,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
 
     const orderPayload = {
       customerId: customerToUse.id as string,
+      posOperatorId: user.id,
       items: orderItems.map((item) => ({
         id: item.id,
         quantity: item.quantity,
@@ -217,7 +230,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       customer.phoneNumber &&
       customer.headSize
     );
-  }
+  };
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInventoryItem, setSelectedInventoryItem] =
@@ -323,9 +336,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
               <h2 className="text-lg font-medium mb-4">Create Order</h2>
 
               <div className="mb-4">
-                <h3 className="text-md font-medium mb-2">
-                  Add Items to Order
-                </h3>
+                <h3 className="text-md font-medium mb-2">Add Items to Order</h3>
                 <div className="relative">
                   <button
                     type="button"
@@ -365,9 +376,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                     <div>
                       <p>
                         <span className="font-medium">Selected:</span>{" "}
-                        {getInventoryItemName(
-                          selectedInventoryItem.attributes
-                        )}
+                        {getInventoryItemName(selectedInventoryItem.attributes)}
                       </p>
                       <p className="text-sm text-gray-500">
                         Available: {selectedInventoryItem.quantity}
@@ -473,9 +482,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                       <span className="col-span-2">{item.name}</span>
                       <span>Qty: {item.quantity}</span>
                       <div className="flex justify-between">
-                        <span>
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </span>
+                        <span>${(item.price * item.quantity).toFixed(2)}</span>
                         <button
                           onClick={() => handleRemoveItem(item.id)}
                           className="text-red-500 hover:text-red-700"
@@ -593,7 +600,9 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                 </div>
                 <button
                   onClick={handleCreateOrder}
-                  disabled={!isCustomerInfoComplete() || orderItems.length === 0}
+                  disabled={
+                    !isCustomerInfoComplete() || orderItems.length === 0
+                  }
                   className="w-full mt-6 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Create Order
