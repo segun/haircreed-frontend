@@ -172,6 +172,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       posOperatorId: user.id,
       items: orderItems.map((item) => ({
         id: item.id,
+        name: item.name,
         quantity: item.quantity,
         price: item.price,
       })),

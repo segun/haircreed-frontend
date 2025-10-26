@@ -4,6 +4,7 @@ import db from "../instant";
 import type { Order, User } from "../types";
 import AdminLayout from "../components/layouts/AdminLayout";
 import LoadingIndicator from "../components/common/LoadingIndicator";
+import OrderDetailsModal from "../components/orders/OrderDetailsModal";
 
 const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   const { isLoading, error, data } = db.useQuery({
@@ -16,6 +17,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
 
   console.log("Orders from VOP: ", { data });
 
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filters, setFilters] = useState({
     paymentStatus: "",
     deliveryMethod: "",
@@ -99,6 +101,26 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     setCurrentPage(pageNumber);
   };
 
+  const handleOrderClick = (order: Order) => {
+    setSelectedOrder(order);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedOrder(null);
+  };
+
+  const handleOrderStatusChange = (orderId: string, status: string) => {
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder({ ...selectedOrder, orderStatus: status });
+    }
+  };
+
+  const handlePaymentStatusChange = (orderId: string, status: string) => {
+    if (selectedOrder?.id === orderId) {
+      setSelectedOrder({ ...selectedOrder, paymentStatus: status });
+    }
+  };
+
   const users = (data?.Users as User[]) || [];
 
   const elipsify = (str: string, length: number) => {
@@ -158,10 +180,11 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
               >
                 <option value="">All</option>
                 <option value="CREATED">Created</option>
-                <option value="Processing">Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
+                <option value="IN PROGRESS">Processing</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="DISPATCHED">Dispatched</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
             <div>
@@ -305,7 +328,11 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                 </thead>
                 <tbody className="bg-white">
                   {currentItems.map((order) => (
-                    <tr key={order.id} className="even:bg-zinc-100">
+                    <tr
+                      key={order.id}
+                      className="even:bg-zinc-100 cursor-pointer hover:bg-zinc-200"
+                      onClick={() => handleOrderClick(order)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">
                         {elipsify(order.orderNumber, 10)}
                       </td>
@@ -357,6 +384,16 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
           </>
         )}
       </div>
+      {selectedOrder && (
+        <OrderDetailsModal
+          isOpen={selectedOrder !== null}
+          order={selectedOrder}
+          user={user}
+          onClose={handleCloseModal}
+          onOrderStatusChange={handleOrderStatusChange}
+          onPaymentStatusChange={handlePaymentStatusChange}
+        />
+      )}
     </AdminLayout>
   );
 };
