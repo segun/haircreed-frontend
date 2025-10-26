@@ -4,20 +4,29 @@ import type {
   CustomerAddress,
   CustomerSearchType,
 } from "../../types";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, Edit } from "lucide-react";
 import Tooltip from "../common/Tooltip";
+import Modal from "../common/Modal";
+import { login } from "../../api/auth";
 
 interface CustomerInformationFormProps {
   customer: Partial<Customer>;
+  setCustomer: (customer: Partial<Customer> | null) => void;
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
-  onFindCustomer: (query: string, type: CustomerSearchType) => void;
-  handleCustomerNewAddressChange: (address: Partial<CustomerAddress> | null) => void;
+  onFindCustomer: (
+    query: string,
+    type: CustomerSearchType
+  ) => Promise<Partial<Customer> | null>;
+  handleCustomerNewAddressChange: (
+    address: Partial<CustomerAddress> | null
+  ) => void;
 }
 
 const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
   customer,
+  setCustomer,
   handleChange,
   onFindCustomer,
   handleCustomerNewAddressChange,
@@ -26,6 +35,20 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
     useState<Partial<CustomerAddress> | null>(null);
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [hasAddress, setHasAddress] = useState(false);
+  const [customerFound, setCustomerFound] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  useEffect(() => {
+    if (customer && customer.id) {
+      setCustomerFound(true);
+    } else {
+      setCustomerFound(false);
+      setEditMode(false);
+    }
+  }, [customer]);
 
   useEffect(() => {
     if (customer && customer.addresses && customer.addresses.length > 0) {
@@ -86,13 +109,60 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
     handleCustomerNewAddressChange(null);
   };
 
+  const handleFindCustomer = async (
+    query: string,
+    type: CustomerSearchType
+  ) => {
+    const foundCustomer = await onFindCustomer(query, type);
+    if (foundCustomer) {
+      setCustomerFound(true);
+    }
+  };
+
+  const handleEditClick = () => {
+    setShowAdminPasswordModal(true);
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordError("");
+    try {
+      await login("admin", adminPassword);
+      setEditMode(true);
+      setShowAdminPasswordModal(false);
+      setAdminPassword("");
+    } catch (error) {
+      setPasswordError("Invalid admin password.");
+      console.error(error);
+    }
+  };
+
+  const handleClearCustomer = () => {
+    setCustomer(null);
+    setCustomerFound(false);
+    setEditMode(false);
+    setSelectedAddress(null);
+  };
+
   const addressToString = (address: Partial<CustomerAddress>) => {
     return `${address.address || ""}`;
   };
 
+  const isFieldDisabled = customerFound && !editMode;
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
       <h2 className="text-lg font-medium mb-4">Customer Information</h2>
+      {customerFound && (
+        <div className="mt-2">
+          <button
+            onClick={handleClearCustomer}
+            className="px-4 py-2 my-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+          >
+            Clear Customer Details
+          </button>
+        </div>
+      )}
       <div className="space-y-4">
         <div>
           <label
@@ -105,16 +175,23 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
             <input
               type="email"
               id="email"
-              value={customer.email}
+              value={customer.email || ""}
               onChange={handleChange}
+              disabled={isFieldDisabled}
               className="flex-1 block w-full rounded-none rounded-l-md pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
             <button
-              onClick={() => onFindCustomer(customer.email || "", "email")}
+              onClick={() =>
+                customerFound
+                  ? handleEditClick()
+                  : handleFindCustomer(customer.email || "", "email")
+              }
               className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm"
             >
-              <Tooltip content="Search by email">
-                <Search size={16} />
+              <Tooltip
+                content={customerFound ? "Edit Customer" : "Search by email"}
+              >
+                {customerFound ? <Edit size={16} /> : <Search size={16} />}
               </Tooltip>
             </button>
           </div>
@@ -130,18 +207,28 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
             <input
               type="tel"
               id="phoneNumber"
-              value={customer.phoneNumber}
+              value={customer.phoneNumber || ""}
               onChange={handleChange}
+              disabled={isFieldDisabled}
               className="flex-1 block w-full rounded-none rounded-l-md pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
             <button
               onClick={() =>
-                onFindCustomer(customer.phoneNumber || "", "phoneNumber")
+                customerFound
+                  ? handleEditClick()
+                  : handleFindCustomer(
+                      customer.phoneNumber || "",
+                      "phoneNumber"
+                    )
               }
               className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm"
             >
-              <Tooltip content="Search by phone number">
-                <Search size={16} />
+              <Tooltip
+                content={
+                  customerFound ? "Edit Customer" : "Search by phone number"
+                }
+              >
+                {customerFound ? <Edit size={16} /> : <Search size={16} />}
               </Tooltip>
             </button>
           </div>
@@ -156,8 +243,9 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
           <input
             type="text"
             id="fullName"
-            value={customer.fullName}
+            value={customer.fullName || ""}
             onChange={handleChange}
+            disabled={isFieldDisabled}
             className="flex-1 block w-full rounded-none rounded-l-md pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
         </div>
@@ -171,8 +259,9 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
           <input
             type="text"
             id="headSize"
-            value={customer.headSize}
+            value={customer.headSize || ""}
             onChange={handleChange}
+            disabled={isFieldDisabled}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           />
         </div>
@@ -193,7 +282,7 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
                 );
                 setSelectedAddress(selected || null);
                 setIsAddingNewAddress(false);
-                handleCustomerNewAddressChange(null);        
+                handleCustomerNewAddressChange(null);
               }}
               value={selectedAddress?.id || ""}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
@@ -269,6 +358,44 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
           </div>
         )}
       </div>
+      {showAdminPasswordModal && (
+        <Modal
+          isOpen={showAdminPasswordModal}
+          title="Admin Authentication"
+          onClose={() => setShowAdminPasswordModal(false)}
+        >
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <h3 className="text-lg font-medium">Admin Authentication</h3>
+            <p>Enter admin password to edit customer details.</p>
+            <div>
+              <label
+                htmlFor="admin-password"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                id="admin-password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
+              {passwordError && (
+                <p className="mt-2 text-sm text-red-600">{passwordError}</p>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Submit
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

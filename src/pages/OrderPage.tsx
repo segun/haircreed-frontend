@@ -64,9 +64,13 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     },
   });
 
-  const handleFindCustomer = (query: string, type: CustomerSearchType) => {
+  const handleFindCustomer = async (
+    query: string,
+    type: CustomerSearchType
+  ): Promise<Partial<Customer> | null> => {
     setCustomerQuery({ query, type });
-    const findCustomer = async () => {
+
+    try {
       const { data } = await db.queryOnce({
         Customers: {
           $:
@@ -79,10 +83,14 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       });
 
       if (data.Customers && data.Customers.length > 0) {
-        setCustomer(data.Customers[0] || {});
+        const found = data.Customers[0] || {};
+        setCustomer(found);
         toast.success("Customer found");
+        return found;
       } else {
-        setCustomer({
+        const emptyCustomer: Partial<Customer> & {
+          newAddress?: Partial<CustomerAddress> | null;
+        } = {
           addresses: [],
           orders: [],
           fullName: "",
@@ -90,12 +98,16 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
           phoneNumber: "",
           headSize: "",
           newAddress: null,
-        });
+        };
+        setCustomer(emptyCustomer);
         toast.error("Customer not found");
+        return null;
       }
-    };
-
-    findCustomer();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to search for customer");
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -480,6 +492,22 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
           <div>
             <CustomerInformationForm
               customer={customer}
+              setCustomer={(c) =>
+                setCustomer(
+                  c ??
+                    ({
+                      addresses: [],
+                      orders: [],
+                      fullName: "",
+                      email: "",
+                      phoneNumber: "",
+                      headSize: "",
+                      newAddress: null,
+                    } as Partial<Customer> & {
+                      newAddress?: Partial<CustomerAddress> | null;
+                    })
+                )
+              }
               handleChange={handleCustomerChange}
               onFindCustomer={handleFindCustomer}
               handleCustomerNewAddressChange={handleCustomerNewAddress}
