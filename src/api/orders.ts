@@ -5,7 +5,7 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API
 type OrderPayload = {
     customerId: string;
     items: { id: string; name: string; quantity: number; price: number }[];
-    status: 'CREATED' | 'PENDING' | 'COMPLETED' | 'CANCELLED';
+    status: 'CREATED' | 'PENDING' | 'COMPLETED' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
     notes?: string;
     orderType: 'pickup' | 'delivery';
     deliveryCharge: number;
@@ -32,6 +32,9 @@ export const updateOrder = async (orderId: string, userId: string, updates: Part
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({updates, userId}),
     });
-    if (!response.ok) throw new Error('Failed to update order');
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Failed to update order: ${response.statusText}`);
+    }
     return response.json();
 }

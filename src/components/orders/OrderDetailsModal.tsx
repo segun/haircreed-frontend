@@ -14,7 +14,7 @@ interface OrderDetailsModalProps {
   onPaymentStatusChange: (orderId: string, status: string) => void;
 }
 
-const ORDER_STATUSES = ['CREATED', 'IN PROGRESS', 'COMPLETED', 'DISPATCHED', 'DELIVERED', 'CANCELLED'];
+const ORDER_STATUSES = ['CREATED', 'IN PROGRESS', 'COMPLETED', 'DISPATCHED', 'DELIVERED', 'CANCELLED', 'RETURNED'];
 const PAYMENT_STATUSES = ['PENDING', 'PAID'];
 
 const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
@@ -31,14 +31,12 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     const newStatus = e.target.value;
     const promise = updateOrder(order.id, user.id, { orderStatus: newStatus });
 
-    toast.promise(promise, {
-      loading: 'Updating order status...',
-      success: 'Order status updated successfully!',
-      error: 'Failed to update order status.',
-    });
-
     try {
-      await promise;
+      await toast.promise(promise, {
+        loading: 'Updating order status...',
+        success: 'Order status updated successfully!',
+        error: (err: Error) => `Failed to update order status: ${err.message}`,
+      });
       onOrderStatusChange(order.id, newStatus);
     } catch (error) {
       console.error('Failed to update order status:', error);
@@ -49,14 +47,12 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     const newStatus = e.target.value;
     const promise = updateOrder(order.id, user.id, { paymentStatus: newStatus });
 
-    toast.promise(promise, {
-      loading: 'Updating payment status...',
-      success: 'Payment status updated successfully!',
-      error: 'Failed to update payment status.',
-    });
-
     try {
-      await promise;
+      await toast.promise(promise, {
+        loading: 'Updating payment status...',
+        success: 'Payment status updated successfully!',
+        error: (err: Error) => `Failed to update payment status: ${err.message}`,
+      });
       onPaymentStatusChange(order.id, newStatus);
     } catch (error) {
       console.error('Failed to update payment status:', error);

@@ -137,6 +137,8 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
         return "bg-green-200";
       case "CANCELLED":
         return "bg-red-100";
+      case "RETURNED":
+        return "bg-red-200";
       default:
         return "";
     }
@@ -204,6 +206,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                 <option value="DISPATCHED">Dispatched</option>
                 <option value="DELIVERED">Delivered</option>
                 <option value="CANCELLED">Cancelled</option>
+                <option value="RETURNED">Returned</option>
               </select>
             </div>
             <div>
