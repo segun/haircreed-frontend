@@ -27,6 +27,8 @@ export type AppSettings = {
 
 export type Settings = {
     vatRate: number;
+    businessName?: string;
+    businessLogo?: string;
 }
 
 export type Order = InstaQLEntity<Schema, 'Orders'> & {

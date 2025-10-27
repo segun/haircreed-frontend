@@ -88,6 +88,7 @@ const LogoutButton = ({
 );
 
 import { Toaster } from "react-hot-toast";
+import db from "../../instant";
 
 export default function AdminLayout({
   user,
@@ -96,7 +97,14 @@ export default function AdminLayout({
   onLogout,
 }: AdminLayoutProps) {
   const location = useLocation();
-  const businessName = "HairCreed";
+  const {
+    data: appSettings,
+  } = db.useQuery({
+    AppSettings: {},
+  });
+
+  const businessName = appSettings?.AppSettings?.[0]?.settings?.businessName;
+  const businessLogo = appSettings?.AppSettings?.[0]?.settings?.businessLogo;
 
   const navigation = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
@@ -118,7 +126,10 @@ export default function AdminLayout({
       <Toaster position="top-right" />
       <div className="fixed inset-y-0 left-0 bg-zinc-800 w-64 p-4 z-30 flex flex-col">
         <div className="flex items-center justify-center h-16 mb-6">
-          <h1 className="text-2xl font-bold text-white">{businessName}</h1>
+          {businessLogo && (
+            <img src={businessLogo} alt="Business Logo" className="h-8 w-auto mr-2 rounded-full" />
+          )}
+          <h1 className="ml-2 text-2xl font-bold text-white">{businessName}</h1>
         </div>
         <nav className="flex-1 space-y-2">
           {navigation.map((item) => (
