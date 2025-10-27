@@ -123,6 +123,25 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
 
   const users = (data?.Users as User[]) || [];
 
+  const getOrderStatusColor = (status: string) => {
+    switch (status) {
+      case "CREATED":
+        return "bg-gray-50";
+      case "IN PROGRESS":
+        return "bg-blue-100";
+      case "COMPLETED":
+        return "bg-green-100";
+      case "DISPATCHED":
+        return "bg-yellow-100";
+      case "DELIVERED":
+        return "bg-green-200";
+      case "CANCELLED":
+        return "bg-red-100";
+      default:
+        return "";
+    }
+  };
+
   const elipsify = (str: string, length: number) => {
     if (str.length > length) {
       return str.slice(0, length) + "...";
@@ -330,7 +349,9 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                   {currentItems.map((order) => (
                     <tr
                       key={order.id}
-                      className="even:bg-zinc-100 cursor-pointer hover:bg-zinc-200"
+                      className={`cursor-pointer hover:bg-zinc-200 ${getOrderStatusColor(
+                        order.orderStatus
+                      )}`}
                       onClick={() => handleOrderClick(order)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">
