@@ -1,6 +1,6 @@
 import type { User } from "../types";
 
-export const login = async (username, password): Promise<User> => {
+export const login = async (username: string, password: string): Promise<User> => {
   const response = await fetch("http://localhost:3000/auth/login", {
     method: "POST",
     headers: {
