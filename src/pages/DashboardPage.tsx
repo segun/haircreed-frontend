@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
-import type { User } from "../types";
+import { getDashboardDetails } from '../api/dashboard';
+import type { DashboardDetails, User } from "../types";
 
 // A simple placeholder card
 const StatCard = ({ title, value, change }: { title: string; value: string; change?: string; }) => (
@@ -16,25 +18,60 @@ type DashboardPageProps = {
 };
 
 export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
+    const [dashboardDetails, setDashboardDetails] = useState<DashboardDetails | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardDetails = async () => {
+            try {
+                const details = await getDashboardDetails();
+                setDashboardDetails(details);
+            } catch (error) {
+                console.error('Failed to fetch dashboard details', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardDetails();
+    }, []);
+
   return (
     <AdminLayout 
         user={user} 
         onLogout={onLogout}
         pageTitle="Dashboard"
     >
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard title="Total Sales" value="$12,345" change="+12% from last month" />
-            <StatCard title="New Orders" value="64" change="+5 from yesterday" />
-            <StatCard title="Pending Payments" value="8" />
-            <StatCard title="Inventory Items" value="256" />
-        </div>
+        {loading ? (
+            <p>Loading...</p>
+        ) : dashboardDetails && (
+            <>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard title="Total Sales" value={`${dashboardDetails.totalSales.toFixed(2)}`} change={`${dashboardDetails.salesPercentageChange}% from last month`} />
+                    <StatCard title="New Orders" value={dashboardDetails.newOrders.toString()} change={`${dashboardDetails.newOrdersChange} from yesterday`} />
+                    <StatCard title="Pending Payments" value={dashboardDetails.pendingPayments.toString()} />
+                    <StatCard title="Inventory Items" value={dashboardDetails.inventoryItems.toString()} />
+                </div>
 
-        <div className="mt-8">
-            <div className="bg-white p-6 rounded-lg shadow-md min-h-[400px]">
-                <h3 className="text-lg font-semibold text-zinc-800">Recent Activity</h3>
-                <p className="mt-2 text-zinc-600">Activity feed will be displayed here...</p>
-            </div>
-        </div>
+                <div className="mt-8">
+                    <div className="bg-white p-6 rounded-lg shadow-md min-h-[400px]">
+                        <h3 className="text-lg font-semibold text-zinc-800">Recent Activity</h3>
+                        <ul className="mt-4 space-y-4">
+                            {dashboardDetails.recentActivity.map(activity => (
+                                <li key={activity.id} className="p-4 border rounded-lg">
+                                    <div className="flex justify-between">
+                                        <p className="font-semibold">{activity.customer.fullName}</p>
+                                        <p className="text-sm text-zinc-500">{new Date(activity.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <p>Order #{activity.orderNumber} - {activity.orderStatus}</p>
+                                    <p>Total: ${activity.totalAmount.toFixed(2)}</p>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </>
+        )}
     </AdminLayout>
   );
 }

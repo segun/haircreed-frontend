@@ -49,3 +49,48 @@ export type Page =
     | 'customers';
 
   export type CustomerSearchType = 'email' | 'phoneNumber' | 'headSize';
+
+export type RecentActivity = {
+  updatedAt: number;
+  totalAmount: number;
+  vatAmount: number;
+  deliveryMethod: string;
+  createdAt: number;
+  posOperator: string;
+  id: string;
+  discountAmount: number;
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
+  amount: number;
+  orderStatus: string;
+  discountType: string;
+  orderNumber: string;
+  paymentStatus: string;
+  notes: string;
+  customer: {
+    id: string;
+    headSize: string;
+    createdAt: number;
+    fullName: string;
+    phoneNumber: string;
+    email: string;
+  };
+  deliveryCharge: number;
+  discountValue: number;
+  vatRate: number;
+  statusHistory: string;
+};
+
+export type DashboardDetails = {
+  totalSales: number;
+  salesPercentageChange: number;
+  newOrders: number;
+  newOrdersChange: number;
+  pendingPayments: number;
+  inventoryItems: number;
+  recentActivity: RecentActivity[];
+};
