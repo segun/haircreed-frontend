@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { User } from "../types";
+import { login } from "../api/auth";
 
 // Define the props for the LoginPage, including the callback
 type LoginPageProps = {
@@ -72,20 +73,8 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         setError("");
 
         try {
-            const response = await fetch('http://localhost:3000/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            });
+            const data = await login(username, password);
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Error: ${response.statusText}`);
-            }
-
-            const data: User = await response.json();
             console.log("Login successful!", data);
             
             onLoginSuccess(data);

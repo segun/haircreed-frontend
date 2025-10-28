@@ -1,7 +1,8 @@
 import type { User } from "../types";
 
+const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_AUTH_ENDPOINT}`
 export const login = async (username: string, password: string): Promise<User> => {
-  const response = await fetch("http://localhost:3000/auth/login", {
+  const response = await fetch(BASE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
