@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import type { Order, User } from '../../types';
 import Modal from '../common/Modal';
 import { updateOrder } from '../../api/orders';
+import { downloadReceipt } from '../../api/pdf';
 import ConfirmDialog from '../common/ConfirmDialog';
 
 interface OrderDetailsModalProps {
@@ -77,6 +78,19 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
       console.error('Failed to update payment status:', error);
     } finally {
       setConfirmOpen(false);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    const promise = downloadReceipt(order.id);
+    try {
+      await toast.promise(promise, {
+        loading: 'Downloading receipt...',
+        success: 'Receipt downloaded successfully!',
+        error: (err: Error) => `Failed to download receipt: ${err.message}`,
+      });
+    } catch (error) {
+      console.error('Failed to download receipt:', error);
     }
   };
 
@@ -174,7 +188,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
               <button
                 type="button"
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-                onClick={() => alert('Receipt printing not implemented yet.')}
+                onClick={handleDownloadReceipt}
               >
                 Receipt
               </button>

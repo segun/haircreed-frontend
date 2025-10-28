@@ -103,7 +103,7 @@ export default function AdminLayout({
     AppSettings: {},
   });
 
-  const businessName = appSettings?.AppSettings?.[0]?.settings?.businessName;
+  const businessName = appSettings?.AppSettings?.[0]?.settings?.businessName || "HairCreed";
   const businessLogo = appSettings?.AppSettings?.[0]?.settings?.businessLogo;
 
   const navigation = [
