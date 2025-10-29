@@ -12,6 +12,7 @@ import { updateUser } from './api/users';
 import OrderPage from "./pages/OrderPage";
 import ViewOrdersPage from './pages/ViewOrdersPage';
 import AppSettingsPage from './pages/AppSettingsPage';
+import ReportsPage from './pages/ReportsPage';
 
 function App() {
   const [user, setUser] = useState<User | null>(() => {
@@ -83,7 +84,7 @@ function App() {
       <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
       <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
       <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
-      <Route path="/reports" element={<div>Reports Page</div>} />
+      <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />
       <Route path="/settings" element={<AppSettingsPage user={user} onLogout={handleLogout}/>} />
       <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
     </Routes>
