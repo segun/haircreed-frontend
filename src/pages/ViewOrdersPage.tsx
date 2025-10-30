@@ -151,6 +151,8 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     return str;
   };
 
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <AdminLayout pageTitle="View Orders" user={user} onLogout={onLogout}>
       {isLoading && <LoadingIndicator />}
@@ -161,7 +163,13 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
       )}
       <div className="p-4">
         <div className="bg-white p-6 rounded-lg shadow-md mb-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <button 
+            className="md:hidden mb-4 w-full px-4 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </button>
+          <div className={`grid grid-cols-1 md:grid-cols-4 gap-6 ${showFilters ? 'block' : 'hidden'} md:grid`}>
             <div>
               <label className="block text-sm font-medium text-zinc-700">
                 Payment Status

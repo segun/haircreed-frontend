@@ -485,15 +485,15 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                   {orderItems.map((item) => (
                     <div
                       key={item.id}
-                      className="grid grid-cols-4 gap-4 items-center"
+                      className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center"
                     >
-                      <span className="col-span-2">{item.name}</span>
+                      <span className="col-span-1 sm:col-span-2">{item.name}</span>
                       <span>Qty: {item.quantity}</span>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span>${(item.price * item.quantity).toFixed(2)}</span>
                         <button
                           onClick={() => handleRemoveItem(item.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 text-sm sm:text-base"
                         >
                           Remove
                         </button>
