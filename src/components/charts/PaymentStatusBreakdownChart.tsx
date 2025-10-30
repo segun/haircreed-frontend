@@ -45,7 +45,7 @@ const PaymentStatusBreakdownChart: React.FC = () => {
                     dataKey="value"
                     label={(entry) => `${entry.name}: ${entry.value}`}
                 >
-                    {chartData.map((entry, index) => (
+                    {chartData.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                 </Pie>

@@ -46,7 +46,7 @@ const DeliveryMethodChart: React.FC = () => {
                     dataKey="value"
                     label={(entry) => `${entry.name}: ${(((entry.value as number) / data.Orders.length) * 100).toFixed(0)}%`}
                 >
-                    {chartData.map((entry, index) => (
+                    {chartData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                 </Pie>
