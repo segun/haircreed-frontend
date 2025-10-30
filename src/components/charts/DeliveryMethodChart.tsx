@@ -44,7 +44,7 @@ const DeliveryMethodChart: React.FC = () => {
                     fill="#8884d8"
                     paddingAngle={5}
                     dataKey="value"
-                    label={(entry) => `${entry.name}: ${((entry.value / data.Orders.length) * 100).toFixed(0)}%`}
+                    label={(entry) => `${entry.name}: ${(((entry.value as number) / data.Orders.length) * 100).toFixed(0)}%`}
                 >
                     {chartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
