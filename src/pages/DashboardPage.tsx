@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
 import { getDashboardDetails } from '../api/dashboard';
 import type { DashboardDetails, User } from "../types";
+import SalesOverTimeChart from '../components/charts/SalesOverTimeChart';
+import PaymentStatusBreakdownChart from '../components/charts/PaymentStatusBreakdownChart';
+import DiscountVsFullPriceChart from '../components/charts/DiscountVsFullPriceChart';
+import OrderDistributionChart from '../components/charts/OrderDistributionChart';
+import OrderStatusDistributionChart from '../components/charts/OrderStatusDistributionChart';
+import SalesByPosOperatorChart from '../components/charts/SalesByPosOperatorChart';
+import DeliveryMethodChart from '../components/charts/DeliveryMethodChart';
 
 // A simple placeholder card
 const StatCard = ({ title, value, change }: { title: string; value: string; change?: string; }) => (
@@ -51,6 +58,16 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
                     <StatCard title="New Orders" value={dashboardDetails.newOrders.toString()} change={`${dashboardDetails.newOrdersChange} from yesterday`} />
                     <StatCard title="Pending Payments" value={dashboardDetails.pendingPayments.toString()} />
                     <StatCard title="Inventory Items" value={dashboardDetails.inventoryItems.toString()} />
+                </div>
+
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <SalesOverTimeChart />
+                    <PaymentStatusBreakdownChart />
+                    <DiscountVsFullPriceChart />
+                    <OrderDistributionChart />
+                    <OrderStatusDistributionChart />
+                    <SalesByPosOperatorChart />
+                    <DeliveryMethodChart />
                 </div>
 
                 <div className="mt-8">
