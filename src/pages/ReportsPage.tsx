@@ -4,6 +4,12 @@ import type { User } from '../types';
 import DetailedSalesReport from '../components/admin/DetailedSalesReport';
 import EndOfDayReport from '../components/admin/EndOfDayReport';
 import SalesByItemReport from '../components/admin/SalesByItemReport';
+import OutstandingPaymentsReport from '../components/admin/OutstandingPaymentsReport';
+import CurrentStockLevelsReport from '../components/admin/CurrentStockLevelsReport';
+import LowStockReport from '../components/admin/LowStockReport';
+import InventoryValuationReport from '../components/admin/InventoryValuationReport';
+import StaffPerformanceReport from '../components/admin/StaffPerformanceReport';
+import OrderFulfillmentReport from '../components/admin/OrderFulfillmentReport';
 
 interface ReportsPageProps {
   user: User;
@@ -23,26 +29,19 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user, onLogout }) => {
       case 'sales-by-item':
         return <SalesByItemReport />;
       case 'outstanding-payments':
-        return <div>Outstanding Payments Report</div>;
-      // Customer Reports
-      case 'customer-purchase-history':
-        return <div>Customer Purchase History</div>;
-      case 'top-customers':
-        return <div>Top Customers</div>;
-      case 'new-customer-list':
-        return <div>New Customer List</div>;
+        return <OutstandingPaymentsReport />;
       // Inventory & Supplier Reports
       case 'current-stock-levels':
-        return <div>Current Stock Levels</div>;
+        return <CurrentStockLevelsReport />;
       case 'low-stock':
-        return <div>Low Stock Report</div>;
+        return <LowStockReport />;
       case 'inventory-valuation':
-        return <div>Inventory Valuation Report</div>;
+        return <InventoryValuationReport />;
       // Operational Reports
       case 'staff-performance':
-        return <div>Staff Performance Report</div>;
+        return <StaffPerformanceReport />;
       case 'order-fulfillment':
-        return <div>Order Fulfillment Report</div>;
+        return <OrderFulfillmentReport />;
       default:
         return <p>Select a report to view.</p>;
     }
@@ -60,11 +59,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user, onLogout }) => {
               <li><button onClick={() => setSelectedReport('end-of-day')} className="text-blue-500 hover:underline">End-of-Day Report</button></li>
               <li><button onClick={() => setSelectedReport('sales-by-item')} className="text-blue-500 hover:underline">Sales by Item Report</button></li>
               <li><button onClick={() => setSelectedReport('outstanding-payments')} className="text-blue-500 hover:underline">Outstanding Payments Report</button></li>
-
-              <li className="font-bold text-lg pt-4">Customer</li>
-              <li><button onClick={() => setSelectedReport('customer-purchase-history')} className="text-blue-500 hover:underline">Customer Purchase History</button></li>
-              <li><button onClick={() => setSelectedReport('top-customers')} className="text-blue-500 hover:underline">Top Customers</button></li>
-              <li><button onClick={() => setSelectedReport('new-customer-list')} className="text-blue-500 hover:underline">New Customer List</button></li>
 
               <li className="font-bold text-lg pt-4">Inventory & Supplier</li>
               <li><button onClick={() => setSelectedReport('current-stock-levels')} className="text-blue-500 hover:underline">Current Stock Levels</button></li>

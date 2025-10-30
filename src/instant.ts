@@ -45,7 +45,7 @@ export const _schema = i.schema({
       notes: i.string().optional(),
     }),
     Customers: i.entity({
-      fullName: i.string(),
+      fullName: i.string().indexed(),
       email: i.string().unique(),
       phoneNumber: i.string().unique(),
       headSize: i.string().optional(),
@@ -66,35 +66,35 @@ export const _schema = i.schema({
       createdAt: i.number(),
     }),
     InventoryItems: i.entity({
-      quantity: i.number(),
+      quantity: i.number().indexed(),
       costPrice: i.number().optional(),
       lastStockedAt: i.number(),
     }),
   },
   links: {
     AttributeCategoryItem: {
-      forward: { on: 'AttributeItem', has: 'one', label: 'category' },
-      reverse: { on: 'AttributeCategory', has: 'many', label: 'items' },
+      forward: { on: "AttributeItem", has: "one", label: "category" },
+      reverse: { on: "AttributeCategory", has: "many", label: "items" },
+    },
+    CustomerOrder: {
+      forward: { on: "Orders", has: "one", label: "customer" },
+      reverse: { on: "Customers", has: "many", label: "orders" },
+    },
+    UserOrder: {
+      forward: { on: "Orders", has: "one", label: "posOperator" },
+      reverse: { on: "Users", has: "many", label: "createdOrders" },
     },
     InventoryItemSupplier: {
-      forward: { on: 'InventoryItems', has: 'one', label: 'supplier' },
-      reverse: { on: 'Suppliers', has: 'many', label: 'inventoryItems' },
+      forward: { on: "InventoryItems", has: "one", label: "supplier" },
+      reverse: { on: "Suppliers", has: "many", label: "inventoryItems" },
     },
-    InventoryItemAttributes: {
-      forward: { on: 'InventoryItems', has: 'many', label: 'attributes' },
-      reverse: { on: 'AttributeItem', has: 'many', label: 'inventoryItems' },
+    InventoryItemAttribute: {
+      forward: { on: "InventoryItems", has: "many", label: "attributes" },
+      reverse: { on: "AttributeItem", has: "many", label: "inventoryItems" },
     },
     CustomerCustomerAddresses: {
-      forward: { on: 'Customers', has: 'many', label: 'addresses' },
-      reverse: { on: 'CustomerAddress', has: 'one', label: 'customer' },
-    },
-    CustomerOrders: {
-      forward: { on: 'Customers', has: 'many', label: 'orders' },
-      reverse: { on: 'Orders', has: 'one', label: 'customer' },
-    },
-    UserOrders: {
-      forward: { on: 'Users', has: 'many', label: 'orders' },
-      reverse: { on: 'Orders', has: 'one', label: 'posOperator' },
+      forward: { on: "Customers", has: "many", label: "addresses" },
+      reverse: { on: "CustomerAddress", has: "one", label: "customer" },
     },
   },
 });
