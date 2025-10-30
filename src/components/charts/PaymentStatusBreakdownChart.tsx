@@ -1,12 +1,13 @@
-
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import db from '../../instant';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 const COLORS = ['#0088FE', '#FFBB28'];
 
 const PaymentStatusBreakdownChart: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({ Orders: {} });
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const chartData = useMemo(() => {
     if (!data?.Orders) return [];
@@ -40,10 +41,10 @@ const PaymentStatusBreakdownChart: React.FC = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    outerRadius={80}
+                    outerRadius={isMobile ? 60 : 80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={(entry) => `${entry.name}: ${entry.value}`}
+                    label={isMobile ? false : (entry) => `${entry.name}: ${entry.value}`}
                 >
                     {chartData.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

@@ -59,8 +59,10 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
                     <StatCard title="Inventory Items" value={dashboardDetails.inventoryItems.toString()} />
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <SalesOverTimeChart />
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="col-span-1 md:col-span-2">
+                        <SalesOverTimeChart />
+                    </div>
                     <PaymentStatusBreakdownChart />
                     <DiscountVsFullPriceChart />
                     <OrderStatusDistributionChart />

@@ -1,12 +1,13 @@
-
 import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import db from '../../instant';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const DeliveryMethodChart: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({ Orders: {} });
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const chartData = useMemo(() => {
     if (!data?.Orders) return [];
@@ -39,12 +40,12 @@ const DeliveryMethodChart: React.FC = () => {
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={isMobile ? 40 : 60}
+                    outerRadius={isMobile ? 60 : 80}
                     fill="#8884d8"
                     paddingAngle={5}
                     dataKey="value"
-                    label={(entry) => `${entry.name}: ${(((entry.value as number) / data.Orders.length) * 100).toFixed(0)}%`}
+                    label={isMobile ? false : (entry) => `${entry.name}: ${(((entry.value as number) / data.Orders.length) * 100).toFixed(0)}%`}
                 >
                     {chartData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

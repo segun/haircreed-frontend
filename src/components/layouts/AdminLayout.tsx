@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Home,
   Package,
@@ -8,6 +8,8 @@ import {
   LogOut,
   Settings,
   User as UserIcon,
+  Menu,
+  X,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import type { User } from "../../types";
@@ -34,12 +36,14 @@ const SidebarLink = ({
   active,
   to,
   disabled,
+  onClick,
 }: {
   icon: React.ReactNode;
   text: string;
   active: boolean;
   to: string;
   disabled?: boolean;
+  onClick?: () => void;
 }) => {
   const commonClasses =
     "w-full flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors";
@@ -58,6 +62,7 @@ const SidebarLink = ({
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={`${commonClasses} ${
         active
           ? "bg-zinc-700 text-white"
@@ -98,6 +103,7 @@ export default function AdminLayout({
   onLogout,
 }: AdminLayoutProps) {
   const location = useLocation();
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const {
     data: appSettings,
   } = db.useQuery({
@@ -122,15 +128,47 @@ export default function AdminLayout({
     { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
   ];
 
+  useEffect(() => {
+    if (isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isSidebarOpen]);
+
+  const handleSidebarLinkClick = () => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-100">
       <Toaster position="top-right" />
-      <div className="fixed inset-y-0 left-0 bg-zinc-800 w-64 p-4 z-30 flex flex-col">
-        <div className="flex items-center justify-center h-16 mb-6">
-          {businessLogo && (
-            <img src={businessLogo} alt="Business Logo" className="h-8 w-auto mr-2 rounded-full" />
-          )}
-          <h1 className="ml-2 text-2xl font-bold text-white">{businessName}</h1>
+      
+      {/* Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Sidebar */}
+      <div className={`fixed inset-y-0 left-0 bg-zinc-800 w-64 p-4 z-30 flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+        <div className="flex items-center justify-between h-16 mb-6">
+          <div className="flex items-center">
+            {businessLogo && (
+              <img src={businessLogo} alt="Business Logo" className="h-8 w-auto mr-2 rounded-full" />
+            )}
+            <h1 className="ml-2 text-2xl font-bold text-white">{businessName}</h1>
+          </div>
+          <button 
+            className="md:hidden text-zinc-400 hover:text-white"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X size={24} />
+          </button>
         </div>
         <nav className="flex-1 space-y-2">
           {navigation.map((item) => (
@@ -141,6 +179,7 @@ export default function AdminLayout({
               active={location.pathname === item.path}
               to={item.path}
               disabled={user?.role === "POS_OPERATOR" && item.path !== "/orders"}
+              onClick={handleSidebarLinkClick}
             />
           ))}
         </nav>
@@ -150,19 +189,31 @@ export default function AdminLayout({
             text="Profile Settings"
             active={location.pathname === "/user-settings"}
             to="/user-settings"
+            onClick={handleSidebarLinkClick}
           />
           <LogoutButton
             icon={<LogOut size={20} />}
             text="Logout"
-            onClick={onLogout}
+            onClick={() => {
+              onLogout();
+              handleSidebarLinkClick();
+            }}
           />
         </div>
       </div>
 
-      <div className="ml-64">
-        <header className="bg-white shadow-sm sticky top-0 z-20">
+      <div className="md:ml-64">
+        <header className="bg-white shadow-sm sticky top-0 z-10">
           <div className="mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-zinc-800">{pageTitle}</h2>
+            <div className="flex items-center">
+              <button 
+                className="md:hidden mr-4 text-zinc-600 hover:text-zinc-900"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu size={24} />
+              </button>
+              <h2 className="text-xl font-semibold text-zinc-800">{pageTitle}</h2>
+            </div>
             <div className="flex items-center">
               <Link 
                 to="/user-settings"
@@ -171,7 +222,7 @@ export default function AdminLayout({
                 <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold">
                   {getInitials(user?.fullName)}
                 </div>
-                <div className="ml-3">
+                <div className="ml-3 hidden sm:block">
                   <p className="text-sm font-medium text-zinc-900">
                     {user?.fullName}
                   </p>

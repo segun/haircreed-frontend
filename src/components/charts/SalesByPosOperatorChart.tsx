@@ -1,10 +1,11 @@
-
 import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import db from '../../instant';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 const SalesByPosOperatorChart: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({ Users: { createdOrders: {} } });
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const chartData = useMemo(() => {
     if (!data?.Users) return [];
@@ -25,7 +26,13 @@ const SalesByPosOperatorChart: React.FC = () => {
         <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis 
+                    dataKey="name" 
+                    angle={isMobile ? -45 : 0} 
+                    textAnchor={isMobile ? 'end' : 'middle'} 
+                    height={isMobile ? 80 : 30} 
+                    fontSize={isMobile ? 10 : 12}
+                />
                 <YAxis />
                 <Tooltip />
                 <Legend />
