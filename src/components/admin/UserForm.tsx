@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import type { User } from "../../types";
+import toast from "react-hot-toast";
 
 type UserFormProps = {
     user: User | null;
@@ -33,6 +34,8 @@ const generatePassword = () => {
 
 const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmitting }) => {
     const [formData, setFormData] = useState<Omit<User, "id"> & { password?: string }>({
+        // id is omitted, but we might have it for existing users.
+        // The type should probably be `Partial<User>`. For now, this is fine.
         username: "",
         fullName: "",
         email: "",
@@ -42,6 +45,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
         createdAt: Date.now(),
         updatedAt: Date.now(),
     });
+
+    const [passwordResetted, setPasswordResetted] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -58,6 +63,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
                 updatedAt: Date.now(),
             });
         }
+        setPasswordResetted(false);
     }, [user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -67,7 +73,19 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
+        const dataToSave = { ...formData };
+        if (user && !passwordResetted) {
+            // Don't send passwordHash if it wasn't reset for an existing user
+            delete (dataToSave as Partial<User>).passwordHash;
+        }
+        onSave(dataToSave);
+    };
+
+    const handleResetPassword = () => {
+        const newPassword = generatePassword();
+        setFormData((prev) => ({ ...prev, passwordHash: newPassword, requiresPasswordReset: true }));
+        setPasswordResetted(true);
+        toast.success(`New password generated. Click Save to apply.`);
     };
 
     const handleRegeneratePassword = () => {
@@ -122,7 +140,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
                         className="block text-sm font-medium text-zinc-700"
                     >
                         Default Password
-                    </label>
+                </label>
                     <div className="mt-1 flex rounded-md shadow-sm">
                         <input
                             type="text"
@@ -130,7 +148,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
                             id="passwordHash"
                             value={formData.passwordHash}
                             onChange={handleChange}
-                            className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:ring-zinc-500 sm:text-sm"
+                        className="flex-1 block w-full min-w-0 rounded-none rounded-l-md border border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:ring-zinc-500 sm:text-sm bg-zinc-50"
+                        readOnly
                         />
                         <button
                             type="button"
@@ -138,6 +157,32 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSave, onCancel, isSubmittin
                             className="inline-flex items-center rounded-r-md border border-l-0 border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-500 hover:bg-zinc-100"
                         >
                             Regenerate
+                        </button>
+                    </div>
+                </div>
+            )}
+            {user && (
+                <div>
+                    <label className="block text-sm font-medium text-zinc-700">
+                        Password
+                    </label>
+                    <div className="mt-1 flex items-center space-x-2">
+                        <input
+                            type={passwordResetted ? "text" : "password"}
+                            value={
+                                passwordResetted
+                                    ? formData.passwordHash
+                                    : "●●●●●●●●"
+                            }
+                            readOnly
+                            className={`flex-1 block w-full min-w-0 rounded-md border border-zinc-300 px-3 py-2 sm:text-sm ${passwordResetted ? "bg-zinc-50" : "bg-zinc-100 text-zinc-500"}`}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleResetPassword}
+                            className="px-4 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                        >
+                            Reset Password
                         </button>
                     </div>
                 </div>

@@ -23,7 +23,12 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
         setIsSubmitting(true);
         try {
             if ("id" in user) {
-                await updateUser(user.id, user);
+                const { id, ...userData } = user;
+                // passwordHash will be present only if it was reset
+                if (user.passwordHash) {
+                    userData.requiresPasswordReset = true;
+                }
+                await updateUser(id, userData);
             } else {
                 await createUser(user);
             }
