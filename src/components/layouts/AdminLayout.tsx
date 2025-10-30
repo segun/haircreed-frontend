@@ -7,6 +7,7 @@ import {
   Users,
   LogOut,
   Settings,
+  User as UserIcon,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import type { User } from "../../types";
@@ -143,7 +144,13 @@ export default function AdminLayout({
             />
           ))}
         </nav>
-        <div className="mt-auto">
+        <div className="mt-auto space-y-2">
+          <SidebarLink
+            icon={<UserIcon size={20} />}
+            text="Profile Settings"
+            active={location.pathname === "/user-settings"}
+            to="/user-settings"
+          />
           <LogoutButton
             icon={<LogOut size={20} />}
             text="Logout"
@@ -157,17 +164,22 @@ export default function AdminLayout({
           <div className="mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-zinc-800">{pageTitle}</h2>
             <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold">
-                {getInitials(user?.fullName)}
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-zinc-900">
-                  {user?.fullName}
-                </p>
-                <p className="text-xs text-zinc-500 capitalize">
-                  {user?.role} Role
-                </p>
-              </div>
+              <Link 
+                to="/user-settings"
+                className="flex items-center hover:bg-zinc-50 rounded-lg p-2 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-white font-bold">
+                  {getInitials(user?.fullName)}
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-zinc-900">
+                    {user?.fullName}
+                  </p>
+                  <p className="text-xs text-zinc-500 capitalize">
+                    {user?.role} Role
+                  </p>
+                </div>
+              </Link>
             </div>
           </div>
         </header>

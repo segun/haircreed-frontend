@@ -13,6 +13,7 @@ import OrderPage from "./pages/OrderPage";
 import ViewOrdersPage from './pages/ViewOrdersPage';
 import AppSettingsPage from './pages/AppSettingsPage';
 import ReportsPage from './pages/ReportsPage';
+import UserSettingsPage from './pages/UserSettingsPage';
 
 function App() {
   const [user, setUser] = useState<User | null>(() => {
@@ -68,6 +69,10 @@ function App() {
     navigate('/');
   };
 
+  const handleUserUpdate = (updatedUser: User) => {
+    setUser(updatedUser);
+  };
+
   if (!user) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
@@ -86,6 +91,7 @@ function App() {
       <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
       <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />
       <Route path="/settings" element={<AppSettingsPage user={user} onLogout={handleLogout}/>} />
+      <Route path="/user-settings" element={<UserSettingsPage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />} />
       <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
     </Routes>
   );
