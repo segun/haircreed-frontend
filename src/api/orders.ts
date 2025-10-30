@@ -5,7 +5,7 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API
 type OrderPayload = {
     customerId: string;
     items: { id: string; name: string; quantity: number; price: number }[];
-    status: 'CREATED' | 'PENDING' | 'COMPLETED' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
+    status: 'CREATED' | 'IN PROGRESS' | 'COMPLETED' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
     notes?: string;
     orderType: 'pickup' | 'delivery';
     deliveryCharge: number;

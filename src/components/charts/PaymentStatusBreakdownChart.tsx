@@ -12,7 +12,7 @@ const PaymentStatusBreakdownChart: React.FC = () => {
     if (!data?.Orders) return [];
 
     const statusCounts = data.Orders.reduce((acc, order) => {
-      const status = order.paymentStatus || 'Pending'; // Default to Pending if status is not set
+      const status = order.paymentStatus || 'PENDING'; // Default to PENDING if status is not set
       if (!acc[status]) {
         acc[status] = 0;
       }

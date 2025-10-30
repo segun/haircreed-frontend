@@ -5,7 +5,6 @@ import type { DashboardDetails, User } from "../types";
 import SalesOverTimeChart from '../components/charts/SalesOverTimeChart';
 import PaymentStatusBreakdownChart from '../components/charts/PaymentStatusBreakdownChart';
 import DiscountVsFullPriceChart from '../components/charts/DiscountVsFullPriceChart';
-import OrderDistributionChart from '../components/charts/OrderDistributionChart';
 import OrderStatusDistributionChart from '../components/charts/OrderStatusDistributionChart';
 import SalesByPosOperatorChart from '../components/charts/SalesByPosOperatorChart';
 import DeliveryMethodChart from '../components/charts/DeliveryMethodChart';
@@ -64,7 +63,6 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
                     <SalesOverTimeChart />
                     <PaymentStatusBreakdownChart />
                     <DiscountVsFullPriceChart />
-                    <OrderDistributionChart />
                     <OrderStatusDistributionChart />
                     <SalesByPosOperatorChart />
                     <DeliveryMethodChart />

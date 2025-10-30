@@ -31,7 +31,7 @@ const DetailedSalesReport: React.FC = () => {
     },
   });
 
-  const orders = data?.Orders || [];
+  const orders = useMemo(() => (data?.Orders || []).slice().sort((a, b) => b.createdAt - a.createdAt), [data?.Orders]);
 
   return (
     <div>

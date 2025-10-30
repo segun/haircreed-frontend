@@ -6,7 +6,7 @@ const OrderFulfillmentReport: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({
     Orders: {
       $: {
-        where: { orderStatus: { $in: ['CREATED', 'PENDING', 'COMPLETED', 'DISPATCHED', 'RETURNED'] } },
+        where: { orderStatus: { $in: ['CREATED', 'IN PROGRESS', 'COMPLETED', 'DISPATCHED', 'RETURNED'] } },
       },
       customer: {},
     },
