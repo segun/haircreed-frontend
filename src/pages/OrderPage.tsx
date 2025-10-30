@@ -140,10 +140,11 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
 
     if (!customerToUse || !customerToUse.id) {
       try {
-        await createCustomer({
+        const createdCustomer =await createCustomer({
           ...customerToUse,
           newAddress: customer.newAddress || null,
         });
+        customerToUse = createdCustomer;
         toast.success("Customer created successfully");
       } catch (error) {
         console.error(error);
@@ -167,6 +168,12 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       }
     }
 
+    if(!customerToUse.id) {
+      toast.error("Customer information is incomplete");
+      setIsProcessing(false);
+      return;
+    }
+    
     const orderPayload = {
       customerId: customerToUse.id as string,
       posOperatorId: user.id,
