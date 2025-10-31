@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import db from '../../instant';
 
 const CurrentStockLevelsReport: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({
     InventoryItems: {
+      $: {
+        order: { lastStockedAt: 'desc' },
+      },
       attributes: {},
       supplier: {},
     },
   });
 
-  const items = data?.InventoryItems || [];
+  const items = useMemo(() => data?.InventoryItems || [], [data?.InventoryItems]);
 
   const formatAttributes = (attributes: { name: string }[]) => {
     if (!attributes || attributes.length === 0) return 'N/A';

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import db from '../../instant';
 
 const OrderFulfillmentReport: React.FC = () => {
@@ -7,12 +6,13 @@ const OrderFulfillmentReport: React.FC = () => {
     Orders: {
       $: {
         where: { orderStatus: { $in: ['CREATED', 'IN PROGRESS', 'COMPLETED', 'DISPATCHED', 'RETURNED'] } },
+        order: { createdAt: 'desc' },
       },
       customer: {},
     },
   });
 
-  const orders = data?.Orders || [];
+  const orders = useMemo(() => data?.Orders || [], [data?.Orders]);
 
   return (
     <div>

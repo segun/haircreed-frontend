@@ -12,7 +12,7 @@ export const _schema = i.schema({
       passwordHash: i.string(),
       role: i.string(),
       requiresPasswordReset: i.boolean(),
-      createdAt: i.number(),
+      createdAt: i.number().indexed(),
       updatedAt: i.number(),
     }),
     AttributeCategory: i.entity({
@@ -39,7 +39,7 @@ export const _schema = i.schema({
       orderStatus: i.string(),
       paymentStatus: i.string(),
       deliveryMethod: i.string(),
-      createdAt: i.number(),
+      createdAt: i.number().indexed(),
       updatedAt: i.number(),
       statusHistory: i.json(),
       notes: i.string().optional(),
@@ -68,7 +68,7 @@ export const _schema = i.schema({
     InventoryItems: i.entity({
       quantity: i.number().indexed(),
       costPrice: i.number().optional(),
-      lastStockedAt: i.number(),
+      lastStockedAt: i.number().indexed(),
     }),
   },
   links: {

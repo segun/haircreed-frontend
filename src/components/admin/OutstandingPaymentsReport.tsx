@@ -1,20 +1,19 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import db from '../../instant';
 
 const OutstandingPaymentsReport: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({
     Orders: {
       $: {
-        where: {
-          paymentStatus: { $ne: 'PAID' },
-        },
+        where: { paymentStatus: { $ne: 'PAID' } },
+        order: { createdAt: 'desc' },
       },
       customer: {},
     },
   });
 
-  const orders = data?.Orders || [];
+  const orders = useMemo(() => data?.Orders || [], [data?.Orders]);
 
   return (
     <div>
