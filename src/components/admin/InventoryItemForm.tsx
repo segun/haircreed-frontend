@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { InventoryItemWithDetails, Supplier, AttributeCategory } from '../../types';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, AlertCircle } from 'lucide-react';
 
 type InventoryItemFormProps = {
     item: InventoryItemWithDetails | null;
@@ -25,6 +25,7 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
     const [costPrice, setCostPrice] = useState<number | ''>('');
     const [supplierId, setSupplierId] = useState<string>('');
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (item) { // For editing
@@ -48,6 +49,7 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
             setSupplierId('');
             setSelectedAttributes({});
         }
+        setError(null); // Reset error on item change
     }, [item]);
 
     const handleAttributeChange = (categoryId: string, attributeId: string) => {
@@ -56,7 +58,12 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
         const attributeIds = Object.values(selectedAttributes).filter(id => id);
+        if (attributeIds.length === 0) {
+            setError('At least one attribute must be selected.');
+            return;
+        }
         const payload = {
             id: item?.id || undefined,
             quantity: Number(quantity),
@@ -69,6 +76,14 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+            {error && (
+                <div className="rounded-md bg-red-50 p-4">
+                    <div className="flex">
+                        <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                        <p className="ml-3 text-sm font-medium text-red-800">{error}</p>
+                    </div>
+                </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Basic Info */}
                 <div>
@@ -121,7 +136,6 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                             id={`attr-${category.id}`}
                             value={selectedAttributes[category.id] || ''}
                             onChange={(e) => handleAttributeChange(category.id, e.target.value)}
-                            required
                             className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
                         >
                             <option value="">Select {category.title.toLowerCase()}</option>

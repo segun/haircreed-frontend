@@ -88,7 +88,8 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
       orders = orders.filter((o) => new Date(o.updatedAt) <= endDate);
     }
 
-    return orders;
+    // Sort by most recent on top
+    return orders.sort((a, b) => b.createdAt - a.createdAt);
   }, [data?.Orders, filters]);
 
   // Pagination logic
