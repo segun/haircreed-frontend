@@ -6,7 +6,7 @@ export type Schema = typeof _schema;
 
 export type User = InstaQLEntity<Schema, 'Users'>;
 export type AttributeItem = InstaQLEntity<Schema, 'AttributeItem'> & {
-  category: AttributeCategory;
+  category?: AttributeCategory;
 }
 export type AttributeCategory = InstaQLEntity<Schema, 'AttributeCategory'> & {
   items: AttributeItem[];

@@ -268,7 +268,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   }, [orderItems, discount, orderType, deliveryCharge, vatRate]);
 
   const getInventoryItemName = (attributes: AttributeItem[]) => {
-    return attributes.map((attr: AttributeItem) => attr.name).join(" - ") + " " + attributes[0].category.title;
+    return attributes.map((attr: AttributeItem) => attr.name).join(" - ") + " " + attributes[0]?.category?.title;
   };
 
   const handleSelectItem = (item: InventoryItem) => {
