@@ -268,7 +268,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   }, [orderItems, discount, orderType, deliveryCharge, vatRate]);
 
   const getInventoryItemName = (attributes: AttributeItem[]) => {
-    return attributes.map((attr: AttributeItem) => attr.name).join(" - ");
+    return attributes.map((attr: AttributeItem) => attr.name).join(" - ") + " " + attributes[0].category.title;
   };
 
   const handleSelectItem = (item: InventoryItem) => {
@@ -302,21 +302,33 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   if (isDataLoading) return <LoadingIndicator />;
   if (error) return <div>Error: {error.message}</div>;
 
-  // Normalize supplier to always be defined
+  // Normalize supplier and attribute categories to always be defined
   const inventoryItems: InventoryItem[] = (data?.InventoryItems || []).map(
-    (item) => ({
-      ...item,
-      supplier: item.supplier ?? {
-        id: "",
-        createdAt: 0,
-        name: "",
-        email: "",
-        contactPerson: "",
-        phoneNumber: "",
-        address: "",
-        notes: "",
-      },
-    })
+    (item) =>
+      ({
+        ...item,
+        supplier:
+          item.supplier ?? {
+            id: "",
+            createdAt: 0,
+            name: "",
+            email: "",
+            contactPerson: "",
+            phoneNumber: "",
+            address: "",
+            notes: "",
+          },
+        attributes: (item.attributes || []).map((attr) => ({
+          ...attr,
+          category:
+            attr.category ?? {
+              id: "",
+              createdAt: 0,
+              updatedAt: 0,
+              title: "",
+            },
+        })),
+      } as InventoryItem)
   );
 
   const filteredInventoryItems = inventoryItems.filter((item) =>

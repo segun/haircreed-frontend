@@ -24,7 +24,7 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
 
     const formatAttributes = (item: InventoryItem) => {
         if (!item.attributes || item.attributes.length === 0) return 'N/A';
-        return item.attributes.map(attr => attr.name).join(', ');
+        return item.attributes.map(attr => attr.name).join(', ') + " " +item.attributes[0].category.title;
     };
 
     return (

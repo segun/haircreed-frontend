@@ -5,7 +5,9 @@ export type DB = IInstantDatabase<typeof _schema>
 export type Schema = typeof _schema;
 
 export type User = InstaQLEntity<Schema, 'Users'>;
-export type AttributeItem = InstaQLEntity<Schema, 'AttributeItem'>
+export type AttributeItem = InstaQLEntity<Schema, 'AttributeItem'> & {
+  category: AttributeCategory;
+}
 export type AttributeCategory = InstaQLEntity<Schema, 'AttributeCategory'> & {
   items: AttributeItem[];
 };
