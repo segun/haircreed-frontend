@@ -74,7 +74,11 @@ function App() {
   };
 
   if (!user) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+    return (
+      <Routes>
+        <Route path="*" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
+      </Routes>
+    );
   }
 
   if (user.requiresPasswordReset) {
