@@ -98,7 +98,7 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                     />
                 </div>
                 <div>
-                    <label htmlFor="costPrice" className="block text-sm font-medium text-zinc-700">Cost Price (per unit)</label>
+                    <label htmlFor="costPrice" className="block text-sm font-medium text-zinc-700">Price (per unit)</label>
                     <input
                         type="number"
                         id="costPrice"

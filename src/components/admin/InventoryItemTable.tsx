@@ -35,7 +35,7 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                         <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Attributes</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Quantity</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Cost Price</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Price</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Supplier</th>
                             <th scope="col" className="relative px-6 py-3"><span className="sr-only">Edit</span></th>
                         </tr>
