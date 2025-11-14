@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Edit2, Trash2, PlusCircle, X } from "lucide-react";
+import { Edit2, Trash2, PlusCircle, X, Check } from "lucide-react";
 import {
   createItem,
   updateItem,
   deleteItem as apiDeleteItem,
+  updateCategory,
 } from "../../api/inventoryAttributes";
 import ConfirmDialog from "../common/ConfirmDialog";
 import type { AttributeCategory, AttributeItem } from "../../types";
@@ -23,6 +24,7 @@ export default function AttributeManager({
 }: AttributeManagerProps) {
   const [newItemName, setNewItemName] = useState("");
   const [editingItem, setEditingItem] = useState<AttributeItem | null>(null);
+  const [editingCategoryTitle, setEditingCategoryTitle] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<AttributeItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +88,34 @@ export default function AttributeManager({
     } finally {
       setIsLoading(false);
     }
-  }
+  };
+
+  const handleStartEditCategory = () => {
+    setEditingCategoryTitle(category.title);
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!editingCategoryTitle || !editingCategoryTitle.trim()) return;
+    if (editingCategoryTitle === category.title) {
+      setEditingCategoryTitle(null);
+      return;
+    }
+    setIsLoading(true);
+    try {
+      setError(null);
+      await updateCategory(category.id, editingCategoryTitle);
+      setEditingCategoryTitle(null);
+      onUpdate(); // Refetch categories
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelEditCategory = () => {
+    setEditingCategoryTitle(null);
+  };
 
   return (
     <>
@@ -99,16 +128,60 @@ export default function AttributeManager({
       />
       <div className="bg-white p-6 rounded-lg shadow-md relative">
         {isLoading && <LoadingIndicator />}
-        <button
-          onClick={handleDeleteCategory}
-          className="absolute top-2 right-2 p-1 text-zinc-400 hover:text-red-600 hover:bg-red-100 rounded-full"
-          title={`Delete ${category.title} category`}
-        >
-          <X size={18} />
-        </button>
-        <h3 className="text-lg font-semibold text-zinc-800 mb-4">
-          {category.title}
-        </h3>
+        <div className="absolute top-2 right-2 flex items-center space-x-1">
+          {editingCategoryTitle === null && (
+            <>
+              <Tooltip content="Edit category name">
+                <button
+                  onClick={handleStartEditCategory}
+                  className="p-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full"
+                  title={`Edit ${category.title} category`}
+                >
+                  <Edit2 size={16} />
+                </button>
+              </Tooltip>
+              <Tooltip content="Delete category">
+                <button
+                  onClick={handleDeleteCategory}
+                  className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-100 rounded-full"
+                  title={`Delete ${category.title} category`}
+                >
+                  <X size={18} />
+                </button>
+              </Tooltip>
+            </>
+          )}
+        </div>
+        
+        {editingCategoryTitle !== null ? (
+          <div className="mb-4 flex items-center space-x-2">
+            <input
+              type="text"
+              value={editingCategoryTitle}
+              onChange={(e) => setEditingCategoryTitle(e.target.value)}
+              className="flex-grow block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-zinc-900 focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-semibold"
+              autoFocus
+            />
+            <button
+              onClick={handleUpdateCategory}
+              className="p-2 text-white bg-zinc-600 hover:bg-zinc-700 rounded-md"
+              title="Save"
+            >
+              <Check size={16} />
+            </button>
+            <button
+              onClick={handleCancelEditCategory}
+              className="p-2 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-md"
+              title="Cancel"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <h3 className="text-lg font-semibold text-zinc-800 mb-4">
+            {category.title}
+          </h3>
+        )}
 
         {error && (
           <p className="text-sm text-red-500 bg-red-100 p-2 rounded-md mb-4">

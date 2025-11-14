@@ -16,6 +16,16 @@ export const createCategory = async (title: string): Promise<AttributeCategory> 
   return response.json();
 };
 
+export const updateCategory = async (categoryId: string, title: string): Promise<AttributeCategory> => {
+  const response = await fetch(`${BASE_URL}/categories/${categoryId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  if (!response.ok) throw new Error('Failed to update category');
+  return response.json();
+};
+
 export const deleteCategory = async (categoryId: string): Promise<void> => {
   const response = await fetch(`${BASE_URL}/categories/${categoryId}`, {
     method: 'DELETE',
