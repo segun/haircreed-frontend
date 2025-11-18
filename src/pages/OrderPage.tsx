@@ -25,6 +25,7 @@ interface OrderItem {
   name: string;
   price: number;
   quantity: number;
+  notes: string;
 }
 
 const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
@@ -184,7 +185,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
         price: item.price,
       })),
       status: "CREATED" as const,
-      notes: notes,
+      notes: orderItems.map((item) => item.notes).join(", "),
       orderType: orderType,
       deliveryCharge: deliveryCharge,
       discount: discount,
@@ -286,6 +287,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       name: getInventoryItemName(selectedInventoryItem.attributes),
       price: price,
       quantity: quantity,
+      notes: notes,
     };
 
     setOrderItems((prev) => [...prev, newOrderItem]);
