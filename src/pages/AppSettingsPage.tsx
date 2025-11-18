@@ -53,6 +53,18 @@ const AppSettingsPage: React.FC<any> = ({ user, onLogout }) => {
     }
   };
 
+  // Access control: Only SUPER_ADMIN can access this page
+  if (user.role !== "SUPER_ADMIN") {
+    return (
+      <AdminLayout user={user} onLogout={onLogout} pageTitle="Access Denied">
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-zinc-800 mb-4">Access Denied</h2>
+          <p className="text-sm text-zinc-600">You do not have permission to access App Settings. This page is restricted to Super Administrators only.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 

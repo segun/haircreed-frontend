@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import type { InventoryItem, InventoryItemWithDetails } from '../../types';
+import type { InventoryItem, InventoryItemWithDetails, User } from '../../types';
 import ConfirmDialog from '../common/ConfirmDialog';
 
 type InventoryItemTableProps = {
     items: InventoryItemWithDetails[] | undefined;
     onEdit: (item: InventoryItemWithDetails) => void;
     onDelete: (itemId: string) => void;
+    user: User;
 };
 
-const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, onDelete }) => {
+const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, onDelete, user }) => {
     const [itemToDelete, setItemToDelete] = useState<InventoryItemWithDetails | null>(null);
 
     const handleDeleteClick = (item: InventoryItemWithDetails) => {
@@ -48,12 +49,16 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.costPrice ? `$${item.costPrice.toFixed(2)}` : 'N/A'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.supplier?.name || 'N/A'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onClick={() => onEdit(item as InventoryItemWithDetails)} className="text-zinc-600 hover:text-zinc-900">
-                                        Edit
-                                    </button>
-                                    <button onClick={() => handleDeleteClick(item)} className="ml-4 text-red-600 hover:text-red-900">
-                                        Delete
-                                    </button>
+                                    {user.role === "SUPER_ADMIN" && (
+                                        <>
+                                            <button onClick={() => onEdit(item as InventoryItemWithDetails)} className="text-zinc-600 hover:text-zinc-900">
+                                                Edit
+                                            </button>
+                                            <button onClick={() => handleDeleteClick(item)} className="ml-4 text-red-600 hover:text-red-900">
+                                                Delete
+                                            </button>
+                                        </>
+                                    )}
                                 </td>
                             </tr>
                         ))}

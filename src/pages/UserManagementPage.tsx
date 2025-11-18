@@ -58,6 +58,18 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
         setEditingUser(null);
     };
 
+    // Access control: Only SUPER_ADMIN can access this page
+    if (user.role !== "SUPER_ADMIN") {
+        return (
+            <AdminLayout user={user} onLogout={onLogout} pageTitle="Access Denied">
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h2 className="text-xl font-semibold text-zinc-800 mb-4">Access Denied</h2>
+                    <p className="text-sm text-zinc-600">You do not have permission to access User Management. This page is restricted to Super Administrators only.</p>
+                </div>
+            </AdminLayout>
+        );
+    }
+    
     return (
         <AdminLayout pageTitle="User Management" user={user || undefined} onLogout={onLogout}>
             <div className="p-4">

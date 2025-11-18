@@ -380,36 +380,38 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         <>
             <Modal isOpen={isOpen} title={`Order #${order.orderNumber}`} onClose={onClose}>
                 <div className="p-4">
-                    <div className="flex justify-end mb-4">
-                        {!isEditMode ? (
-                            <button
-                                onClick={handleEditToggle}
-                                className="inline-flex items-center px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
-                            >
-                                <Edit size={16} className="mr-2" />
-                                Edit Order
-                            </button>
-                        ) : (
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={handleSaveChanges}
-                                    disabled={isSaving}
-                                    className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
-                                >
-                                    <Save size={16} className="mr-2" />
-                                    {isSaving ? "Saving..." : "Save Changes"}
-                                </button>
+                    {user.role === "SUPER_ADMIN" && (
+                        <div className="flex justify-end mb-4">
+                            {!isEditMode ? (
                                 <button
                                     onClick={handleEditToggle}
-                                    disabled={isSaving}
                                     className="inline-flex items-center px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
                                 >
-                                    <X size={16} className="mr-2" />
-                                    Cancel
+                                    <Edit size={16} className="mr-2" />
+                                    Edit Order
                                 </button>
-                            </div>
-                        )}
-                    </div>
+                            ) : (
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={handleSaveChanges}
+                                        disabled={isSaving}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                                    >
+                                        <Save size={16} className="mr-2" />
+                                        {isSaving ? "Saving..." : "Save Changes"}
+                                    </button>
+                                    <button
+                                        onClick={handleEditToggle}
+                                        disabled={isSaving}
+                                        className="inline-flex items-center px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                                    >
+                                        <X size={16} className="mr-2" />
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <h3 className="text-lg font-medium text-zinc-900 mb-3">

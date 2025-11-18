@@ -10,6 +10,7 @@ import {
   User as UserIcon,
   Menu,
   X,
+  UserCircle,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import type { User } from "../../types";
@@ -119,6 +120,7 @@ export default function AdminLayout({
     { name: "Point of Sale", path: "/orders", icon: <ShoppingCart size={20} /> },
     { name: "View Orders", path: "/view-orders", icon: <ShoppingCart size={20} /> },
     { name: "Reports", path: "/reports", icon: <BarChart2 size={20} /> },
+    { name: "Customers", path: "/customers", icon: <UserCircle size={20} /> },
     { name: "Users", path: "/users", icon: <Users size={20} /> },
     {
       name: "Attributes",

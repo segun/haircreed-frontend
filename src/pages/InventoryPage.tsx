@@ -145,7 +145,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
                         />
                     </div>
                 )}
-                {isLoading ? <p>Loading inventory...</p> : <InventoryItemTable items={inventoryItems} onEdit={handleEdit} onDelete={handleDelete} />}
+                {isLoading ? <p>Loading inventory...</p> : <InventoryItemTable items={inventoryItems} onEdit={handleEdit} onDelete={handleDelete} user={user} />}
             </div>
         </AdminLayout>
     );

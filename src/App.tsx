@@ -14,6 +14,7 @@ import ViewOrdersPage from './pages/ViewOrdersPage';
 import AppSettingsPage from './pages/AppSettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import UserSettingsPage from './pages/UserSettingsPage';
+import CustomersPage from './pages/CustomersPage';
 
 function App() {
   const [user, setUser] = useState<User | null>(() => {
@@ -91,6 +92,7 @@ function App() {
       <Route path="/inventory-attributes" element={<InventoryAttributesPage user={user} onLogout={handleLogout} />} />
       <Route path="/inventory" element={<InventoryPage user={user} onLogout={handleLogout} />} />
       <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
+      <Route path="/customers" element={<CustomersPage user={user} onLogout={handleLogout} />} />
       <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
       <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
       <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />
