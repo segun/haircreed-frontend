@@ -102,7 +102,7 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                     <div>
                         <h1 className="text-2xl font-bold text-zinc-800">Customer Management</h1>
                         <p className="text-sm text-zinc-600 mt-1">
-                            Manage your customer database with full CRUD operations
+                            Manage your customers
                         </p>
                     </div>
                     <button
