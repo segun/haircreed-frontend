@@ -36,6 +36,7 @@ export type Settings = {
 export type Order = InstaQLEntity<Schema, 'Orders'> & {
     customer: Customer;
     posOperator: User;
+    customerId?: string;
 };
 export type CustomerAddress = InstaQLEntity<Schema, 'CustomerAddress'>;
 export type Customer = InstaQLEntity<Schema, 'Customers'> & {

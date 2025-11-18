@@ -26,11 +26,23 @@ export const createOrder = async (order: OrderPayload): Promise<Order> => {
     return response.json();
 };
 
-export const updateOrder = async (orderId: string, userId: string, updates: Partial<Order>): Promise<Order> => {
+type UpdateOrderPayload = {
+    updates: Partial<Order>;
+    userId: string;
+    customerChanged?: boolean;
+};
+
+export const updateOrder = async (orderId: string, userId: string, updates: Partial<Order>, customerChanged?: boolean): Promise<Order> => {
+    const payload: UpdateOrderPayload = {
+        updates,
+        userId,
+        ...(customerChanged && { customerChanged }),
+    };
+
     const response = await fetch(`${BASE_URL}/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({updates, userId}),
+        body: JSON.stringify(payload),
     });
     if (!response.ok) {
         const errorData = await response.json().catch(() => null);

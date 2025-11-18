@@ -185,7 +185,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
         price: item.price,
       })),
       status: "CREATED" as const,
-      notes: orderItems.map((item) => item.notes).join(", "),
+      notes: orderItems.map((item) => item.notes).filter(Boolean).join(", "),
       orderType: orderType,
       deliveryCharge: deliveryCharge,
       discount: discount,
