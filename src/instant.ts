@@ -101,7 +101,7 @@ export const _schema = i.schema({
 
 
 const db = init({
-  appId: "fa407515-a417-4530-9b44-628c2f6dcd88",
+  appId: import.meta.env.VITE_INSTANT_APP_ID || '9356182e-9457-427f-818c-3c35184a669f',
   schema: _schema,
 });
 

@@ -15,8 +15,6 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     Users: {},
   });
 
-  console.log("Orders from VOP: ", { data });
-
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filters, setFilters] = useState({
     paymentStatus: "",
