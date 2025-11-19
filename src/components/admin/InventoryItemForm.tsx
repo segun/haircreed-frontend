@@ -127,6 +127,24 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                 </div>
             </div>
 
+            {/* Actions */}
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="px-4 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-zinc-800 hover:bg-zinc-900 disabled:opacity-50"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? 'Saving...' : 'Save Item'}
+                </button>
+            </div>            
+
             {/* Attributes */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 border-t pt-6">
                 {attributeCategories.map(category => (
