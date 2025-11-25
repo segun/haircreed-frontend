@@ -11,6 +11,8 @@ import {
   Menu,
   X,
   UserCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import type { User } from "../../types";
@@ -105,6 +107,7 @@ export default function AdminLayout({
 }: AdminLayoutProps) {
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
   const {
     data: appSettings,
   } = db.useQuery({
@@ -120,14 +123,17 @@ export default function AdminLayout({
     { name: "Point of Sale", path: "/orders", icon: <ShoppingCart size={20} /> },
     { name: "View Orders", path: "/view-orders", icon: <ShoppingCart size={20} /> },
     { name: "Reports", path: "/reports", icon: <BarChart2 size={20} /> },
-    { name: "Customers", path: "/customers", icon: <UserCircle size={20} /> },
-    { name: "Users", path: "/users", icon: <Users size={20} /> },
     {
       name: "Attributes",
       path: "/inventory-attributes",
       icon: <Settings size={20} />,
     },
-    { name: "Settings", path: "/settings", icon: <Settings size={20} /> },
+  ];
+
+  const settingsItems = [
+    { name: "System Settings", path: "/settings", icon: <Settings size={20} /> },
+    { name: "Customers", path: "/customers", icon: <UserCircle size={20} /> },
+    { name: "Users", path: "/users", icon: <Users size={20} /> },
   ];
 
   useEffect(() => {
@@ -158,7 +164,7 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 bg-zinc-800 w-64 p-4 z-30 flex flex-col transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
-        <div className="flex items-center justify-between h-16 mb-6">
+        <div className="flex items-center justify-between h-16 mb-6 flex-shrink-0">
           <div className="flex items-center">
             {businessLogo && (
               <img src={businessLogo} alt="Business Logo" className="h-8 w-auto mr-2 rounded-full" />
@@ -172,7 +178,7 @@ export default function AdminLayout({
             <X size={24} />
           </button>
         </div>
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-2 overflow-y-auto min-h-0 pb-4">
           {navigation.map((item) => (
             <SidebarLink
               key={item.name}
@@ -184,8 +190,44 @@ export default function AdminLayout({
               onClick={handleSidebarLinkClick}
             />
           ))}
+          
+          {/* Collapsible Settings Section */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+              disabled={user?.role === "POS_OPERATOR"}
+              className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                user?.role === "POS_OPERATOR"
+                  ? "cursor-not-allowed text-zinc-500 bg-zinc-800"
+                  : "text-zinc-400 hover:bg-zinc-700 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center">
+                <Settings size={20} />
+                <span className="ml-3">Settings</span>
+              </div>
+              {user?.role !== "POS_OPERATOR" && (
+                isSettingsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />
+              )}
+            </button>
+            
+            {isSettingsExpanded && user?.role !== "POS_OPERATOR" && (
+              <div className="ml-4 space-y-1 border-l-2 border-zinc-700 pl-2">
+                {settingsItems.map((item) => (
+                  <SidebarLink
+                    key={item.name}
+                    icon={item.icon}
+                    text={item.name}
+                    active={location.pathname === item.path}
+                    to={item.path}
+                    onClick={handleSidebarLinkClick}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
-        <div className="mt-auto space-y-2">
+        <div className="space-y-2 flex-shrink-0 pt-4 border-t border-zinc-700">
           <SidebarLink
             icon={<UserIcon size={20} />}
             text="Profile Settings"
