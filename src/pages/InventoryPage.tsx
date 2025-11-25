@@ -127,7 +127,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
             </Modal>
 
             <div className="p-4">
-                {user.role === 'SUPER_ADMIN' && (
+                {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                     <div className="flex justify-end items-center mb-4">
                         <button
                             onClick={() => { setEditingItem(null); setIsFormOpen(true); }}

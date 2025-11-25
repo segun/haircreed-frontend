@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { InventoryItemWithDetails, Supplier, AttributeCategory, User } from '../../types';
+import type { InventoryItemWithDetails, Supplier, AttributeCategory, User, InventoryItem } from '../../types';
 import { PlusCircle, AlertCircle } from 'lucide-react';
 
 type InventoryItemFormProps = {
@@ -101,6 +101,11 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
         onSave(payload);
     };
 
+    const formatAttributes = (item: InventoryItem) => {
+        if (!item.attributes || item.attributes.length === 0) return 'N/A';
+        return item.attributes.map(attr => attr.name).join(', ') + " " +item.attributes[0]?.category?.title;
+    };
+
     // Render simplified form for ADMIN users adding quantity
     if (mode === 'addQuantity' && user.role === 'ADMIN' && item) {
         return (
@@ -118,7 +123,7 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                 {/* Current Item Details */}
                 <div className="bg-zinc-50 p-4 rounded-md">
                     <p className="text-sm text-zinc-600"><span className="font-medium">Current Quantity:</span> {item.quantity}</p>
-                    <p className="text-sm text-zinc-600"><span className="font-medium">Item:</span> {item.attributes?.map(attr => attr.name).join(', ')}</p>
+                    <p className="text-sm text-zinc-600"><span className="font-medium">Item:</span> {formatAttributes(item)}</p>
                 </div>
 
                 {/* Quantity to Add */}
