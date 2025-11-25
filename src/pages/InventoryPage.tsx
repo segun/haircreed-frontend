@@ -85,6 +85,12 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
         setIsFormOpen(true);
     };
 
+    const getFormMode = (): 'create' | 'edit' | 'addQuantity' => {
+        if (!editingItem) return 'create';
+        if (user.role === 'ADMIN') return 'addQuantity';
+        return 'edit';
+    };
+
     const handleDelete = async (itemId: string) => {
         setIsSubmitting(true);
         setWriteError(null);
@@ -121,14 +127,16 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
             </Modal>
 
             <div className="p-4">
-                <div className="flex justify-end items-center mb-4">
-                    <button
-                        onClick={() => { setEditingItem(null); setIsFormOpen(true); }}
-                        className="px-4 py-2 bg-zinc-800 text-white rounded-md hover:bg-zinc-900"
-                    >
-                        Add Inventory Item
-                    </button>
-                </div>
+                {user.role === 'SUPER_ADMIN' && (
+                    <div className="flex justify-end items-center mb-4">
+                        <button
+                            onClick={() => { setEditingItem(null); setIsFormOpen(true); }}
+                            className="px-4 py-2 bg-zinc-800 text-white rounded-md hover:bg-zinc-900"
+                        >
+                            Add Inventory Item
+                        </button>
+                    </div>
+                )}
 
                 {(error || writeError) && <p className="text-sm text-red-500 bg-red-100 p-3 rounded-md mb-4">Error: {error?.message || writeError}</p>}
 
@@ -142,6 +150,8 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
                             onCancel={handleCancel}
                             onAddSupplier={() => { setWriteError(null); setIsSupplierModalOpen(true); }}
                             isSubmitting={isSubmitting}
+                            user={user}
+                            mode={getFormMode()}
                         />
                     </div>
                 )}

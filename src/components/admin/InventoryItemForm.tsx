@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { InventoryItemWithDetails, Supplier, AttributeCategory } from '../../types';
+import type { InventoryItemWithDetails, Supplier, AttributeCategory, User } from '../../types';
 import { PlusCircle, AlertCircle } from 'lucide-react';
 
 type InventoryItemFormProps = {
@@ -10,6 +10,8 @@ type InventoryItemFormProps = {
     onCancel: () => void;
     onAddSupplier: () => void;
     isSubmitting: boolean;
+    user: User;
+    mode: 'create' | 'edit' | 'addQuantity';
 };
 
 const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
@@ -20,8 +22,11 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
     onCancel,
     onAddSupplier,
     isSubmitting,
+    user,
+    mode,
 }) => {
     const [quantity, setQuantity] = useState<number | ''>('');
+    const [quantityToAdd, setQuantityToAdd] = useState<number | ''>('');
     const [costPrice, setCostPrice] = useState<number | ''>('');
     const [supplierId, setSupplierId] = useState<string>('');
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
@@ -49,8 +54,9 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
             setSupplierId('');
             setSelectedAttributes({});
         }
+        setQuantityToAdd('');
         setError(null); // Reset error on item change
-    }, [item]);
+    }, [item, attributeCategories]);
 
     const handleAttributeChange = (categoryId: string, attributeId: string) => {
         setSelectedAttributes(prev => ({ ...prev, [categoryId]: attributeId }));
@@ -59,6 +65,27 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        
+        // Special handling for ADMIN users in addQuantity mode
+        if (mode === 'addQuantity' && user.role === 'ADMIN' && item) {
+            if (!quantityToAdd || Number(quantityToAdd) <= 0) {
+                setError('Please enter a valid quantity to add.');
+                return;
+            }
+            const newQuantity = item.quantity + Number(quantityToAdd);
+            const attributeIds = item.attributes?.map(attr => attr.id) || [];
+            const payload = {
+                id: item.id,
+                quantity: newQuantity,
+                costPrice: item.costPrice || undefined,
+                supplierId: item.supplier?.id || undefined,
+                attributeIds,
+            };
+            onSave(payload);
+            return;
+        }
+        
+        // Standard handling for SUPER_ADMIN or create mode
         const attributeIds = Object.values(selectedAttributes).filter(id => id);
         if (attributeIds.length === 0) {
             setError('At least one attribute must be selected.');
@@ -74,6 +101,68 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
         onSave(payload);
     };
 
+    // Render simplified form for ADMIN users adding quantity
+    if (mode === 'addQuantity' && user.role === 'ADMIN' && item) {
+        return (
+            <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-lg font-medium text-zinc-900">Add Stock Quantity</h3>
+                {error && (
+                    <div className="rounded-md bg-red-50 p-4">
+                        <div className="flex">
+                            <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+                            <p className="ml-3 text-sm font-medium text-red-800">{error}</p>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Current Item Details */}
+                <div className="bg-zinc-50 p-4 rounded-md">
+                    <p className="text-sm text-zinc-600"><span className="font-medium">Current Quantity:</span> {item.quantity}</p>
+                    <p className="text-sm text-zinc-600"><span className="font-medium">Item:</span> {item.attributes?.map(attr => attr.name).join(', ')}</p>
+                </div>
+
+                {/* Quantity to Add */}
+                <div>
+                    <label htmlFor="quantityToAdd" className="block text-sm font-medium text-zinc-700">How many items do you want to add?</label>
+                    <input
+                        type="number"
+                        id="quantityToAdd"
+                        value={quantityToAdd}
+                        onChange={(e) => setQuantityToAdd(e.target.value === '' ? '' : Number(e.target.value))}
+                        min="1"
+                        required
+                        className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+                        placeholder="Enter quantity to add"
+                    />
+                    {quantityToAdd && Number(quantityToAdd) > 0 && (
+                        <p className="mt-2 text-sm text-zinc-600">
+                            New quantity will be: <span className="font-medium text-zinc-900">{item.quantity + Number(quantityToAdd)}</span>
+                        </p>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="px-4 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-zinc-800 hover:bg-zinc-900 disabled:opacity-50"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Adding...' : 'Add to Stock'}
+                    </button>
+                </div>
+            </form>
+        );
+    }
+
+    // Render full form for SUPER_ADMIN or create mode
     return (
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
             {error && (
@@ -126,24 +215,6 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                     </div>
                 </div>
             </div>
-
-            {/* Actions */}
-            <div className="flex justify-end space-x-2 pt-4 border-t">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-4 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
-                >
-                    Cancel
-                </button>
-                <button
-                    type="submit"
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-zinc-800 hover:bg-zinc-900 disabled:opacity-50"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting ? 'Saving...' : 'Save Item'}
-                </button>
-            </div>            
 
             {/* Attributes */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 border-t pt-6">
