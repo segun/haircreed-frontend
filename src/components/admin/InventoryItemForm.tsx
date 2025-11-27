@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { InventoryItemWithDetails, Supplier, AttributeCategory, User, InventoryItem } from '../../types';
-import { PlusCircle, AlertCircle } from 'lucide-react';
+import { PlusCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 type InventoryItemFormProps = {
     item: InventoryItemWithDetails | null;
@@ -31,6 +31,8 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
     const [supplierId, setSupplierId] = useState<string>('');
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
     const [error, setError] = useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = useState<boolean>(false);
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
 
     useEffect(() => {
         if (item) { // For editing
@@ -39,20 +41,26 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
             setSupplierId(item.supplier?.id || '');
 
             const initialAttributes: Record<string, string> = {};
+            const initialCategoryIds: string[] = [];
             item.attributes?.forEach((attr) => {
                 const category = attributeCategories.find(cat =>
                     cat.items.some(catItem => catItem.id === attr.id)
                 );
                 if (category) {
                     initialAttributes[category.id] = attr.id;
+                    if (!initialCategoryIds.includes(category.id)) {
+                        initialCategoryIds.push(category.id);
+                    }
                 }
             });
             setSelectedAttributes(initialAttributes);
+            setSelectedCategoryIds(initialCategoryIds);
         } else { // For creating
             setQuantity('');
             setCostPrice('');
             setSupplierId('');
             setSelectedAttributes({});
+            setSelectedCategoryIds([]);
         }
         setQuantityToAdd('');
         setError(null); // Reset error on item change
@@ -101,9 +109,11 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
         onSave(payload);
     };
 
-    const formatAttributes = (item: InventoryItem) => {
+    const getInventoryItemName = (item: InventoryItem) => {
         if (!item.attributes || item.attributes.length === 0) return 'N/A';
-        return item.attributes.map(attr => attr.name).join(', ') + " " +item.attributes[0]?.category?.title;
+        return item.attributes
+            .map(attr => attr.category?.title ? `${attr.category.title}: ${attr.name}` : attr.name)
+            .join(', ');
     };
 
     // Render simplified form for ADMIN users adding quantity
@@ -123,7 +133,7 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                 {/* Current Item Details */}
                 <div className="bg-zinc-50 p-4 rounded-md">
                     <p className="text-sm text-zinc-600"><span className="font-medium">Current Quantity:</span> {item.quantity}</p>
-                    <p className="text-sm text-zinc-600"><span className="font-medium">Item:</span> {formatAttributes(item)}</p>
+                    <p className="text-sm text-zinc-600"><span className="font-medium">Item:</span> {getInventoryItemName(item)}</p>
                 </div>
 
                 {/* Quantity to Add */}
@@ -222,21 +232,123 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
             </div>
 
             {/* Attributes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 border-t pt-6">
-                {attributeCategories.map(category => (
-                    <div key={category.id}>
-                        <label htmlFor={`attr-${category.id}`} className="block text-sm font-medium text-zinc-700">{category.title}</label>
-                        <select
-                            id={`attr-${category.id}`}
-                            value={selectedAttributes[category.id] || ''}
-                            onChange={(e) => handleAttributeChange(category.id, e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
-                        >
-                            <option value="">Select {category.title.toLowerCase()}</option>
-                            {category.items.map(catItem => <option key={catItem.id} value={catItem.id}>{catItem.name}</option>)}
-                        </select>
+            <div className="border-t pt-6">
+                {/* Toggle Button */}
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-zinc-900">Product Attributes</h4>
+                    <button
+                        type="button"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-md transition-colors"
+                    >
+                        {isExpanded ? (
+                            <>
+                                <ChevronUp size={18} />
+                                <span>Switch to Compact View</span>
+                            </>
+                        ) : (
+                            <>
+                                <ChevronDown size={18} />
+                                <span>Switch to Full View</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+
+                {/* Collapsed View (Default) */}
+                {!isExpanded && (
+                    <div className="space-y-4">
+                        {/* Checkbox-based category selector */}
+                        <div>
+                            <label className="block text-sm font-medium text-zinc-700 mb-2">
+                                Select Attribute Categories
+                            </label>
+                            <div className="border border-zinc-300 rounded-md p-3 bg-zinc-50 space-y-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                                {attributeCategories.map(category => (
+                                    <label key={category.id} className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 p-2 rounded transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedCategoryIds.includes(category.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedCategoryIds(prev => [...prev, category.id]);
+                                                } else {
+                                                    setSelectedCategoryIds(prev => prev.filter(id => id !== category.id));
+                                                    setSelectedAttributes(prev => {
+                                                        const updated = { ...prev };
+                                                        delete updated[category.id];
+                                                        return updated;
+                                                    });
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-zinc-600 border-zinc-300 rounded focus:ring-zinc-500"
+                                        />
+                                        <span className="text-sm text-zinc-700">{category.title}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            {selectedCategoryIds.length === 0 && (
+                                <p className="mt-1 text-xs text-zinc-500">Select at least one category to continue</p>
+                            )}
+                        </div>
+
+                        {/* Individual dropdowns for selected categories */}
+                        {selectedCategoryIds.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                                {selectedCategoryIds.map(categoryId => {
+                                    const category = attributeCategories.find(cat => cat.id === categoryId);
+                                    if (!category) return null;
+                                    return (
+                                        <div key={category.id}>
+                                            <label htmlFor={`attr-collapsed-${category.id}`} className="block text-sm font-medium text-zinc-700">
+                                                {category.title}
+                                            </label>
+                                            <select
+                                                id={`attr-collapsed-${category.id}`}
+                                                value={selectedAttributes[category.id] || ''}
+                                                onChange={(e) => handleAttributeChange(category.id, e.target.value)}
+                                                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+                                            >
+                                                <option value="">Select {category.title.toLowerCase()}</option>
+                                                {category.items.map(catItem => (
+                                                    <option key={catItem.id} value={catItem.id}>
+                                                        {catItem.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
-                ))}
+                )}
+
+                {/* Expanded View */}
+                {isExpanded && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {attributeCategories.map(category => (
+                            <div key={category.id}>
+                                <label htmlFor={`attr-${category.id}`} className="block text-sm font-medium text-zinc-700">
+                                    {category.title}
+                                </label>
+                                <select
+                                    id={`attr-${category.id}`}
+                                    value={selectedAttributes[category.id] || ''}
+                                    onChange={(e) => handleAttributeChange(category.id, e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+                                >
+                                    <option value="">Select {category.title.toLowerCase()}</option>
+                                    {category.items.map(catItem => (
+                                        <option key={catItem.id} value={catItem.id}>
+                                            {catItem.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Actions */}

@@ -5,16 +5,22 @@ import db from '../../instant';
 const InventoryValuationReport: React.FC = () => {
   const { isLoading, error, data } = db.useQuery({
     InventoryItems: {
-      attributes: {},
+      attributes: {
+        category: {},
+      },
     },
   });
 
   const items = useMemo(() => data?.InventoryItems || [], [data?.InventoryItems]);
 
-  const formatAttributes = (attributes: { name: string }[]) => {
-    if (!attributes || attributes.length === 0) return 'N/A';
-    return attributes.map((attr) => attr.name).join(', ');
-  };
+    const getInventoryItemName = (item: typeof items[0]) => {
+        if (!item.attributes || item.attributes.length === 0) return "N/A";
+        return item.attributes
+            .map((attr) =>
+                attr.category?.title ? `${attr.category.title}: ${attr.name}` : attr.name,
+            )
+            .join(", ");
+    };
 
   const totalValue = useMemo(() => {
     return items.reduce((acc, item) => {
@@ -64,7 +70,7 @@ const InventoryValuationReport: React.FC = () => {
             {items.map((item) => (
               <tr key={item.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {formatAttributes(item.attributes)}
+                  {getInventoryItemName(item)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
                 <td className="px-6 py-4 whitespace-nowrap">

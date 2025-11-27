@@ -23,9 +23,11 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
         }
     };
 
-    const formatAttributes = (item: InventoryItem) => {
+    const getInventoryItemName = (item: InventoryItem) => {
         if (!item.attributes || item.attributes.length === 0) return 'N/A';
-        return item.attributes.map(attr => attr.name).join(', ') + " " +item.attributes[0]?.category?.title;
+        return item.attributes
+            .map(attr => attr.category?.title ? `${attr.category.title}: ${attr.name}` : attr.name)
+            .join(', ');
     };
 
     return (
@@ -44,7 +46,7 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                     <tbody className="bg-white divide-y divide-zinc-200">
                         {(items ?? []).map((item) => (
                             <tr key={item.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{formatAttributes(item)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{getInventoryItemName(item)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.quantity}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.costPrice ? `$${item.costPrice.toFixed(2)}` : 'N/A'}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.supplier?.name || 'N/A'}</td>
