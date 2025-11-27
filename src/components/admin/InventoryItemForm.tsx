@@ -33,6 +33,7 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
     const [error, setError] = useState<string | null>(null);
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+    const [categorySearchTerm, setCategorySearchTerm] = useState<string>('');
 
     useEffect(() => {
         if (item) { // For editing
@@ -263,29 +264,41 @@ const InventoryItemForm: React.FC<InventoryItemFormProps> = ({
                             <label className="block text-sm font-medium text-zinc-700 mb-2">
                                 Select Attribute Categories
                             </label>
+                            <input
+                                type="text"
+                                placeholder="Search categories..."
+                                value={categorySearchTerm}
+                                onChange={(e) => setCategorySearchTerm(e.target.value)}
+                                className="mb-2 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+                            />
                             <div className="border border-zinc-300 rounded-md p-3 bg-zinc-50 space-y-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                                {attributeCategories.map(category => (
-                                    <label key={category.id} className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 p-2 rounded transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedCategoryIds.includes(category.id)}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedCategoryIds(prev => [...prev, category.id]);
-                                                } else {
-                                                    setSelectedCategoryIds(prev => prev.filter(id => id !== category.id));
-                                                    setSelectedAttributes(prev => {
-                                                        const updated = { ...prev };
-                                                        delete updated[category.id];
-                                                        return updated;
-                                                    });
-                                                }
-                                            }}
-                                            className="w-4 h-4 text-zinc-600 border-zinc-300 rounded focus:ring-zinc-500"
-                                        />
-                                        <span className="text-sm text-zinc-700">{category.title}</span>
-                                    </label>
-                                ))}
+                                {attributeCategories
+                                    .filter(category => 
+                                        category.title.toLowerCase().includes(categorySearchTerm.toLowerCase())
+                                    )
+                                    .sort((a, b) => a.title.localeCompare(b.title))
+                                    .map(category => (
+                                        <label key={category.id} className="flex items-center gap-2 cursor-pointer hover:bg-zinc-100 p-2 rounded transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCategoryIds.includes(category.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedCategoryIds(prev => [...prev, category.id]);
+                                                    } else {
+                                                        setSelectedCategoryIds(prev => prev.filter(id => id !== category.id));
+                                                        setSelectedAttributes(prev => {
+                                                            const updated = { ...prev };
+                                                            delete updated[category.id];
+                                                            return updated;
+                                                        });
+                                                    }
+                                                }}
+                                                className="w-4 h-4 text-zinc-600 border-zinc-300 rounded focus:ring-zinc-500"
+                                            />
+                                            <span className="text-sm text-zinc-700">{category.title}</span>
+                                        </label>
+                                    ))}
                             </div>
                             {selectedCategoryIds.length === 0 && (
                                 <p className="mt-1 text-xs text-zinc-500">Select at least one category to continue</p>

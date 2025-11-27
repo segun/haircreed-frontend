@@ -30,6 +30,12 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
             .join(', ');
     };
 
+    const sortedItems = (items ?? []).sort((a, b) => {
+        const nameA = getInventoryItemName(a).toLowerCase();
+        const nameB = getInventoryItemName(b).toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+
     return (
         <>
             <div className="overflow-x-auto">
@@ -44,7 +50,7 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-zinc-200">
-                        {(items ?? []).map((item) => (
+                        {sortedItems.map((item) => (
                             <tr key={item.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{getInventoryItemName(item)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.quantity}</td>
