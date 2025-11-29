@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { InventoryItem, InventoryItemWithDetails, User } from '../../types';
 import ConfirmDialog from '../common/ConfirmDialog';
 
@@ -11,6 +11,36 @@ type InventoryItemTableProps = {
 
 const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, onDelete, user }) => {
     const [itemToDelete, setItemToDelete] = useState<InventoryItemWithDetails | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [debouncedQuery, setDebouncedQuery] = useState<string>('');
+
+    useEffect(() => {
+        const t = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
+        return () => clearTimeout(t);
+    }, [searchQuery]);
+
+    const highlightMatch = (text: string | undefined, q: string) => {
+        const s = text ?? '';
+        if (!q) return s;
+        const lower = s.toLowerCase();
+        const ql = q.toLowerCase();
+        const parts: React.ReactNode[] = [];
+        let start = 0;
+        let idx = lower.indexOf(ql, start);
+        let key = 0;
+        while (idx !== -1) {
+            if (idx > start) parts.push(<span key={`t-${key++}`}>{s.substring(start, idx)}</span>);
+            parts.push(
+                <mark key={`m-${key++}`} className="bg-yellow-200 rounded">
+                    {s.substring(idx, idx + ql.length)}
+                </mark>
+            );
+            start = idx + ql.length;
+            idx = lower.indexOf(ql, start);
+        }
+        if (start < s.length) parts.push(<span key={`t-${key++}`}>{s.substring(start)}</span>);
+        return parts.length ? <>{parts}</> : s;
+    };
 
     const handleDeleteClick = (item: InventoryItemWithDetails) => {
         setItemToDelete(item);
@@ -30,14 +60,47 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
             .join(', ');
     };
 
-    const sortedItems = (items ?? []).sort((a, b) => {
-        const nameA = getInventoryItemName(a).toLowerCase();
-        const nameB = getInventoryItemName(b).toLowerCase();
-        return nameA.localeCompare(nameB);
-    });
+    const filteredAndSortedItems = useMemo(() => {
+        const list = (items ?? []).slice();
+        const q = (debouncedQuery || '').toLowerCase();
+
+        const filtered = q
+            ? list.filter((item) => {
+                  const name = getInventoryItemName(item).toLowerCase();
+                  const supplier = (item.supplier?.name || '').toLowerCase();
+                  const qty = String(item.quantity ?? '').toLowerCase();
+                  const price = item.costPrice != null ? String(item.costPrice).toLowerCase() : '';
+                  return (
+                      name.includes(q) ||
+                      supplier.includes(q) ||
+                      qty.includes(q) ||
+                      price.includes(q)
+                  );
+              })
+            : list;
+
+        return filtered.sort((a, b) => {
+            const nameA = getInventoryItemName(a).toLowerCase();
+            const nameB = getInventoryItemName(b).toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+    }, [items, debouncedQuery]);
 
     return (
         <>
+            <div className="mb-4">
+                <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search attributes, supplier, qty, price..."
+                    className="w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                />
+                {searchQuery && (
+                    <p className="mt-1 text-xs text-zinc-500">Searching for "{searchQuery}" (debounced)</p>
+                )}
+            </div>
+
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-zinc-200">
                     <thead className="bg-zinc-50">
@@ -50,12 +113,12 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-zinc-200">
-                        {sortedItems.map((item) => (
+                        {filteredAndSortedItems.map((item) => (
                             <tr key={item.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{getInventoryItemName(item)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.quantity}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.costPrice ? `$${item.costPrice.toFixed(2)}` : 'N/A'}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{item.supplier?.name || 'N/A'}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{highlightMatch(getInventoryItemName(item), debouncedQuery)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(String(item.quantity), debouncedQuery)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.costPrice ? `$${item.costPrice.toFixed(2)}` : 'N/A', debouncedQuery)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.supplier?.name || 'N/A', debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
                                         <button onClick={() => onEdit(item as InventoryItemWithDetails)} className="text-zinc-600 hover:text-zinc-900">
