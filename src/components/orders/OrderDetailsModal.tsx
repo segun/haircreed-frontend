@@ -838,6 +838,28 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                         </div>
                     </div>
                     <div className="mt-6 flex justify-end space-x-4">
+                        {/* Duplicate Save/Cancel here so buttons appear both top and bottom */}
+                        {user.role === "SUPER_ADMIN" && isEditMode && (
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={handleSaveChanges}
+                                    disabled={isSaving}
+                                    className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                                >
+                                    <Save size={16} className="mr-2" />
+                                    {isSaving ? "Saving..." : "Save Changes"}
+                                </button>
+                                <button
+                                    onClick={handleEditToggle}
+                                    disabled={isSaving}
+                                    className="inline-flex items-center px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                                >
+                                    <X size={16} className="mr-2" />
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+
                         {order.paymentStatus === "PAID" && (
                             <button
                                 type="button"
