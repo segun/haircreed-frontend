@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { User } from "../types";
 import { login } from "../api/auth";
+import { PasswordInput } from "../components/common/PasswordInput";
 
 // Define the props for the LoginPage, including the callback
 type LoginPageProps = {
@@ -110,13 +111,13 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                             placeholder="Enter your username"
                         />
 
-                        <InputField
+                        <PasswordInput
                             id="password"
                             label="Password"
-                            type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Enter your password"
+                            required
                         />
 
                         {error && (

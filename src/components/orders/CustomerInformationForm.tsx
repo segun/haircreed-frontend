@@ -8,6 +8,7 @@ import { PlusCircle, Search, Edit } from "lucide-react";
 import Tooltip from "../common/Tooltip";
 import Modal from "../common/Modal";
 import { login } from "../../api/auth";
+import { PasswordInput } from "../common/PasswordInput";
 
 interface CustomerInformationFormProps {
   customer: Partial<Customer>;
@@ -367,24 +368,14 @@ const CustomerInformationForm: React.FC<CustomerInformationFormProps> = ({
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <h3 className="text-lg font-medium">Admin Authentication</h3>
             <p>Enter admin password to edit customer details.</p>
-            <div>
-              <label
-                htmlFor="admin-password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="admin-password"
-                value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              />
-              {passwordError && (
-                <p className="mt-2 text-sm text-red-600">{passwordError}</p>
-              )}
-            </div>
+            <PasswordInput
+              id="admin-password"
+              label="Password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+              error={passwordError}
+              required
+            />
             <div className="flex justify-end">
               <button
                 type="submit"
