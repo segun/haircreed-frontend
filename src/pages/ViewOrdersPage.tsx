@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import db from "../instant";
 import type { Order, User } from "../types";
 import AdminLayout from "../components/layouts/AdminLayout";
@@ -29,6 +29,11 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  // Hover popup state
+  const hoverTimerRef = useRef<number | null>(null);
+  const [hoveredOrder, setHoveredOrder] = useState<Order | null>(null);
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -103,6 +108,40 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   const handleOrderClick = (order: Order) => {
     setSelectedOrder(order);
   };
+
+  // Hover handlers for delayed popup (2.5s)
+  const handleRowMouseEnter = (order: Order, e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    setPopupPos({ x: clientX, y: clientY });
+    if (hoverTimerRef.current) {
+      window.clearTimeout(hoverTimerRef.current);
+    }
+    hoverTimerRef.current = window.setTimeout(() => {
+      setHoveredOrder(order);
+      hoverTimerRef.current = null;
+    }, 1500);
+  };
+
+  const handleRowMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    setPopupPos({ x: clientX, y: clientY });
+  };
+
+  const handleRowMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    setHoveredOrder(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleCloseModal = () => {
     setSelectedOrder(null);
@@ -363,6 +402,9 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                         order.orderStatus
                       )}`}
                       onClick={() => handleOrderClick(order)}
+                      onMouseEnter={(e) => handleRowMouseEnter(order, e)}
+                      onMouseMove={(e) => handleRowMouseMove(e)}
+                      onMouseLeave={handleRowMouseLeave}
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">
                         {elipsify(order.orderNumber, 10)}
@@ -393,6 +435,43 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                 </tbody>
               </table>
             </div>
+            {/* Hover popup showing customer + items (appears after 2.5s) */}
+            {hoveredOrder && (
+              <div
+                className="fixed z-50 w-80 max-w-xs bg-white rounded-md shadow-lg border p-3 text-sm"
+                style={{ left: popupPos.x + 12, top: popupPos.y + 12 }}
+              >
+                <div className="font-semibold mb-1">Order</div>
+                <div className="text-zinc-700 mb-1">#{hoveredOrder.orderNumber}</div>
+                <div className="font-semibold mb-1">Customer</div>
+                <div className="text-zinc-700">{hoveredOrder.customer?.fullName || "—"}</div>
+                {hoveredOrder.customer?.email && (
+                  <div className="text-zinc-500 text-xs">{hoveredOrder.customer.email}</div>
+                )}
+                {hoveredOrder.customer?.phoneNumber && (
+                  <div className="text-zinc-500 text-xs">{hoveredOrder.customer.phoneNumber}</div>
+                )}
+                <div className="border-t mt-2 pt-2 font-semibold">Items</div>
+                <div className="max-h-40 overflow-auto mt-1 space-y-1">
+                  {(() => {
+                    let items: any[] = [];
+                    if (!hoveredOrder.items) return <div className="text-xs text-zinc-500">No items</div>;
+                    try {
+                      items = typeof hoveredOrder.items === "string" ? JSON.parse(hoveredOrder.items) : hoveredOrder.items;
+                    } catch {
+                      items = hoveredOrder.items as any[];
+                    }
+                    if (!Array.isArray(items)) return <div className="text-xs text-zinc-500">No items</div>;
+                    return items.map((it, idx) => (
+                      <div key={idx} className="flex justify-between text-xs text-zinc-700">
+                        <div className="truncate pr-2">{it.name ?? it.description ?? JSON.stringify(it)}</div>
+                        <div className="text-zinc-500">{it.qty ?? it.quantity ?? ""}{it.price ? ` × ${it.price}` : ""}</div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
             <div className="flex justify-between items-center mt-4">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
