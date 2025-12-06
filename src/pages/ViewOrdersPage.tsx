@@ -21,6 +21,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     deliveryMethod: "",
     orderStatus: "",
     customer: "",
+    orderNumber: "",
     posOperator: "",
     createdAtStart: "",
     createdAtEnd: "",
@@ -64,6 +65,11 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
         o.customer?.fullName
           .toLowerCase()
           .includes(filters.customer.toLowerCase())
+      );
+    }
+    if (filters.orderNumber) {
+      orders = orders.filter((o) =>
+        (o.orderNumber || "").toLowerCase().includes(filters.orderNumber.toLowerCase())
       );
     }
     if (filters.posOperator) {
@@ -271,6 +277,18 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                   </option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Order Number
+              </label>
+              <input
+                type="text"
+                name="orderNumber"
+                placeholder="Filter by order number..."
+                onChange={handleFilterChange}
+                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700">
