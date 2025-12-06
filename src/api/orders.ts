@@ -50,3 +50,13 @@ export const updateOrder = async (orderId: string, userId: string, updates: Part
     }
     return response.json();
 }
+
+export const deleteOrder = async (orderId: string): Promise<void> => {
+    const response = await fetch(`${BASE_URL}/${orderId}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to delete order');
+    }
+}

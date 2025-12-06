@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import type { Order, User, CustomerAddress, CustomerSearchType } from "../../types";
 import Modal from "../common/Modal";
-import { updateOrder } from '../../api/orders';
+import { updateOrder, deleteOrder } from '../../api/orders';
 import { downloadReceipt } from '../../api/pdf';
 import { updateCustomer, createCustomer } from '../../api/customers';
 import ConfirmDialog from "../common/ConfirmDialog";
@@ -41,6 +41,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     const [isConfirmOpen, setConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
     const [confirmMessage, setConfirmMessage] = useState("");
+    const [confirmTitle, setConfirmTitle] = useState("Confirm Action");
     const [isEditMode, setIsEditMode] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -124,6 +125,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
     const handleOrderStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newStatus = e.target.value;
+        setConfirmTitle("Confirm Status Change");
         setConfirmMessage(`Are you sure you want to change the order status to ${newStatus}?`);
         setConfirmAction(() => () => confirmOrderStatusChange(newStatus));
         setConfirmOpen(true);
@@ -148,9 +150,35 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
     const handlePaymentStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newStatus = e.target.value;
+        setConfirmTitle("Confirm Payment Status Change");
         setConfirmMessage(`Are you sure you want to change the payment status to ${newStatus}?`);
         setConfirmAction(() => () => confirmPaymentStatusChange(newStatus));
         setConfirmOpen(true);
+    };
+
+    const handleDeleteClick = () => {
+        setConfirmTitle("Delete Order");
+        setConfirmMessage("Are you sure you want to delete this order? This action cannot be undone.");
+        setConfirmAction(() => () => confirmDelete());
+        setConfirmOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        console.log("Deleting order:", order);
+        const promise = deleteOrder(order.id);
+        try {
+            await toast.promise(promise, {
+                loading: "Deleting order...",
+                success: "Order deleted successfully!",
+                error: (err: Error) => `Failed to delete order: ${err.message}`,
+            });
+            // Close modal after deletion
+            onClose();
+        } catch (error) {
+            console.error("Failed to delete order:", error);
+        } finally {
+            setConfirmOpen(false);
+        }
     };
 
     const confirmPaymentStatusChange = async (newStatus: string) => {
@@ -381,15 +409,23 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             <Modal isOpen={isOpen} title={`Order #${order.orderNumber}`} onClose={onClose}>
                 <div className="p-4">
                     {user.role === "SUPER_ADMIN" && (
-                        <div className="flex justify-end mb-4">
+                        <div className="flex justify-end mb-4 space-x-2">
                             {!isEditMode ? (
-                                <button
-                                    onClick={handleEditToggle}
-                                    className="inline-flex items-center px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
-                                >
-                                    <Edit size={16} className="mr-2" />
-                                    Edit Order
-                                </button>
+                                <>
+                                    <button
+                                        onClick={handleEditToggle}
+                                        className="inline-flex items-center px-3 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                                    >
+                                        <Edit size={16} className="mr-2" />
+                                        Edit Order
+                                    </button>
+                                    <button
+                                        onClick={handleDeleteClick}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                                    >
+                                        Delete Order
+                                    </button>
+                                </>
                             ) : (
                                 <div className="flex space-x-2">
                                     <button
@@ -881,7 +917,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             </Modal>
             <ConfirmDialog
                 isOpen={isConfirmOpen}
-                title="Confirm Status Change"
+                title={confirmTitle}
                 message={confirmMessage}
                 onConfirm={() => {
                     if (confirmAction) {
