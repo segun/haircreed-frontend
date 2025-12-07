@@ -114,7 +114,10 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                     </thead>
                     <tbody className="bg-white divide-y divide-zinc-200">
                         {filteredAndSortedItems.map((item) => (
-                            <tr key={item.id}>
+                                    <tr
+                                        key={item.id}
+                                        className={item.quantity === 0 ? 'bg-red-100' : ''}
+                                    >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{highlightMatch(getInventoryItemName(item), debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(String(item.quantity), debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.costPrice ? `$${item.costPrice.toFixed(2)}` : 'N/A', debouncedQuery)}</td>
