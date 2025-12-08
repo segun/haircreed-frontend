@@ -12,9 +12,14 @@ export type AttributeCategory = InstaQLEntity<Schema, 'AttributeCategory'> & {
   items: AttributeItem[];
 };
 export type Supplier = InstaQLEntity<Schema, 'Suppliers'> & {};
+export type InventoryAudit = InstaQLEntity<Schema, 'InventoryAudits'> & {
+  inventoryItem?: InventoryItem;
+};
+
 export type InventoryItem = InstaQLEntity<Schema, 'InventoryItems'> & {
   supplier: Supplier;
   attributes: AttributeItem[];
+  audits?: InventoryAudit[];
 };
 
 export type InventoryItemWithDetails = Omit<InventoryItem, 'attributes' | 'supplier'> & {

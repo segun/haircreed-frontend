@@ -70,6 +70,15 @@ export const _schema = i.schema({
       costPrice: i.number().optional(),
       lastStockedAt: i.number().indexed(),
     }),
+    InventoryAudits: i.entity({
+      inventoryItemId: i.string().indexed(),
+      action: i.string().indexed(),
+      userId: i.string().optional(),
+      details: i.json().optional(),
+      quantityBefore: i.number().optional(),
+      quantityAfter: i.number().optional(),
+      createdAt: i.number().indexed(),
+    }),    
   },
   links: {
     AttributeCategoryItem: {

@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import type { InventoryItem, InventoryItemWithDetails, User } from '../../types';
+import type { InventoryItem, InventoryItemWithDetails, User, InventoryAudit } from '../../types';
 import ConfirmDialog from '../common/ConfirmDialog';
+import Modal from '../common/Modal';
+import db from '../../instant';
 
 type InventoryItemTableProps = {
     items: InventoryItemWithDetails[] | undefined;
@@ -60,6 +62,19 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
             .join(', ');
     };
 
+    const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(null);
+    const [isAuditsOpen, setIsAuditsOpen] = useState(false);
+
+    const openAudits = (id: string) => {
+        setSelectedInventoryId(id);
+        setIsAuditsOpen(true);
+    };
+
+    const closeAudits = () => {
+        setIsAuditsOpen(false);
+        setSelectedInventoryId(null);
+    };
+
     const filteredAndSortedItems = useMemo(() => {
         const list = (items ?? []).slice();
         const q = (debouncedQuery || '').toLowerCase();
@@ -116,7 +131,8 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                         {filteredAndSortedItems.map((item) => (
                                     <tr
                                         key={item.id}
-                                        className={item.quantity === 0 ? 'bg-red-100' : ''}
+                                        className={`cursor-pointer ${item.quantity === 0 ? 'bg-red-100' : ''}`}
+                                        onClick={() => openAudits(item.id)}
                                     >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{highlightMatch(getInventoryItemName(item), debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(String(item.quantity), debouncedQuery)}</td>
@@ -124,12 +140,12 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.supplier?.name || 'N/A', debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (
-                                        <button onClick={() => onEdit(item as InventoryItemWithDetails)} className="text-zinc-600 hover:text-zinc-900">
+                                        <button onClick={(e) => { e.stopPropagation(); onEdit(item as InventoryItemWithDetails); }} className="text-zinc-600 hover:text-zinc-900">
                                             Edit
                                         </button>
                                     )}
                                     {user.role === "SUPER_ADMIN" && (
-                                        <button onClick={() => handleDeleteClick(item)} className="ml-4 text-red-600 hover:text-red-900">
+                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(item); }} className="ml-4 text-red-600 hover:text-red-900">
                                             Delete
                                         </button>
                                     )}
@@ -146,8 +162,90 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                 onConfirm={handleConfirmDelete}
                 onClose={() => setItemToDelete(null)}
             />
+
+            <InventoryAuditsModal
+                isOpen={isAuditsOpen}
+                inventoryItemId={selectedInventoryId}
+                onClose={closeAudits}
+                itemName={selectedInventoryId ? getInventoryItemName((items ?? []).find(i => i.id === selectedInventoryId) as InventoryItem) : ''}
+            />
         </>
     );
 };
 
 export default InventoryItemTable;
+
+type InventoryAuditsModalProps = {
+    isOpen: boolean;
+    inventoryItemId: string | null;
+    onClose: () => void;
+    itemName?: string;
+};
+
+const InventoryAuditsModal: React.FC<InventoryAuditsModalProps> = ({ isOpen, inventoryItemId, onClose, itemName }) => {
+    const [audits, setAudits] = useState<InventoryAudit[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+        const load = async () => {
+            if (!isOpen || !inventoryItemId) return;
+            setIsLoading(true);
+            try {
+                const { data } = await db.queryOnce({
+                    InventoryAudits: {
+                        $: { where: { inventoryItemId } },
+                    },
+                });
+                if (!mounted) return;
+                const list = (data.InventoryAudits || []) as InventoryAudit[];
+                list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                setAudits(list);
+            } catch (err) {
+                console.error('Failed to load inventory audits', err);
+                setAudits([]);
+            } finally {
+                if (mounted) setIsLoading(false);
+            }
+        };
+        load();
+        return () => { mounted = false; };
+    }, [isOpen, inventoryItemId]);
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title={`Inventory Audits${itemName ? ` — ${itemName}` : ''}`}>
+            {isLoading ? (
+                <p className="text-sm text-zinc-500">Loading audits...</p>
+            ) : audits.length === 0 ? (
+                <p className="text-sm text-zinc-500">No audits found for this item.</p>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-zinc-200">
+                        <thead className="bg-zinc-50">
+                            <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500">Date</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500">Action</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500">Qty Before</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500">Qty After</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500">User</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-zinc-200">
+                            {audits.map((a) => (
+                                <tr key={a.id}>
+                                    <td className="px-4 py-2 text-sm text-zinc-600">{a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}</td>
+                                    <td className="px-4 py-2 text-sm text-zinc-800">{a.action}</td>
+                                    <td className="px-4 py-2 text-sm text-zinc-600">{a.quantityBefore ?? '—'}</td>
+                                    <td className="px-4 py-2 text-sm text-zinc-600">{a.quantityAfter ?? '—'}</td>
+                                    <td className="px-4 py-2 text-sm text-zinc-600">{a.userId || '—'}</td>
+                                    <td className="px-4 py-2 text-sm text-zinc-600">{a.details ? JSON.stringify(a.details) : '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </Modal>
+    );
+};
