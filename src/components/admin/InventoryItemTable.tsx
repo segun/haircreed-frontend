@@ -131,7 +131,7 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                         {filteredAndSortedItems.map((item) => (
                                     <tr
                                         key={item.id}
-                                        className={`cursor-pointer ${item.quantity === 0 ? 'bg-red-100' : ''}`}
+                                        className={`cursor-pointer ${((item.quantity ?? 0) === 0) ? 'bg-red-100' : ((item.quantity ?? 0) <= 5 ? 'bg-yellow-100' : '')}`}
                                         onClick={() => openAudits(item.id)}
                                     >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{highlightMatch(getInventoryItemName(item), debouncedQuery)}</td>
