@@ -728,6 +728,20 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                     <p>
                                         <strong>Head Size:</strong> {order.customer?.headSize}
                                     </p>
+                                    <p>
+                                        <strong>Address:</strong>{" "}
+                                        {(() => {
+                                            const addrs = selectedCustomer?.addresses || [];
+                                            const primary = addrs.find((a: CustomerAddress) => a.isPrimary) || addrs[0];
+                                            return primary ? (
+                                                <span>
+                                                    {primary.address} {primary.isPrimary ? "(Primary)" : ""}
+                                                </span>
+                                            ) : (
+                                                <span className="text-sm text-zinc-500 italic">No address on file</span>
+                                            );
+                                        })()}
+                                    </p>
                                 </>
                             )}
                         </div>
