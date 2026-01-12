@@ -3,9 +3,9 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import type { Order, User, CustomerAddress, CustomerSearchType } from "../../types";
 import Modal from "../common/Modal";
-import { updateOrder, deleteOrder } from '../../api/orders';
-import { downloadReceipt } from '../../api/pdf';
-import { updateCustomer, createCustomer } from '../../api/customers';
+import { updateOrder, deleteOrder } from "../../api/orders";
+import { downloadReceipt } from "../../api/pdf";
+import { updateCustomer, createCustomer } from "../../api/customers";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { Edit, Save, X, Search, PlusCircle } from "lucide-react";
 import db from "../../instant";
@@ -71,13 +71,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         order.deliveryMethod || "pickup",
     );
     const [editedNotes, setEditedNotes] = useState(order.notes || "");
+    const [editedWigger, setEditedWigger] = useState(order.wigger?.name || "");
 
     // Fetch all customers for dropdown
-    const { data: customersData } = db.useQuery({ Customers: { addresses: {} } });
-    const allCustomers = customersData?.Customers || [];
+    const { data: customersData } = db.useQuery({
+        Customers: { addresses: {} },
+    });
 
+    const allCustomers = customersData?.Customers || [];
     // Get selected customer details
-    const selectedCustomer = allCustomers.find((c) => c.id === selectedCustomerId) || null;
+    const selectedCustomer = allCustomers.find((c: any) => c.id === selectedCustomerId) || null;
 
     // Reset edited fields when order changes
     useEffect(() => {
@@ -89,10 +92,10 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         });
         setEditedDeliveryMethod(order.deliveryMethod || "DELIVERY");
         setEditedNotes(order.notes || "");
+        setEditedWigger(order.wigger?.name || "");
         setSelectedCustomerId(order.customer?.id || "");
         setIsEditMode(false);
         setIsAddingNewAddress(false);
-        setNewAddress({ address: "", isPrimary: false });
         setIsNewCustomerMode(false);
     }, [order]);
 
@@ -101,7 +104,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         if (selectedCustomer?.addresses && selectedCustomer.addresses.length > 0) {
             // Try to find the primary address or use the first one
             const primaryAddr =
-                selectedCustomer.addresses.find((a) => a.isPrimary) ||
+                selectedCustomer.addresses.find((a: any) => a.isPrimary) ||
                 selectedCustomer.addresses[0];
             setSelectedAddressId(primaryAddr?.id || "");
         } else {
@@ -158,7 +161,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
     const handleDeleteClick = () => {
         setConfirmTitle("Delete Order");
-        setConfirmMessage("Are you sure you want to delete this order? This action cannot be undone.");
+        setConfirmMessage(
+            "Are you sure you want to delete this order? This action cannot be undone.",
+        );
         setConfirmAction(() => () => confirmDelete());
         setConfirmOpen(true);
     };
@@ -209,6 +214,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             });
             setEditedDeliveryMethod(order.deliveryMethod || "DELIVERY");
             setEditedNotes(order.notes || "");
+            setEditedWigger(order.wigger?.name || "");
             setSelectedCustomerId(order.customer?.id || "");
             setIsAddingNewAddress(false);
             setNewAddress({ address: "", isPrimary: false });
@@ -298,12 +304,13 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             let customerChanged = false;
 
             // Determine if we need to create a new customer
-            const isNewCustomer = isNewCustomerMode || (!selectedCustomerId && (
-                editedCustomer.fullName ||
-                editedCustomer.email ||
-                editedCustomer.phoneNumber ||
-                editedCustomer.headSize
-            ));
+            const isNewCustomer =
+                isNewCustomerMode ||
+                (!selectedCustomerId &&
+                    (editedCustomer.fullName ||
+                        editedCustomer.email ||
+                        editedCustomer.phoneNumber ||
+                        editedCustomer.headSize));
 
             // Create new customer if needed
             if (isNewCustomer) {
@@ -365,13 +372,12 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                 updates.notes = editedNotes;
             }
 
+            if (editedWigger !== (order.wigger?.name || "")) {
+                (updates as any).wigger = editedWigger || undefined;
+            }
+
             // Update the order - only send customerId and customerChanged flag
-            const promise = updateOrder(
-                order.id,
-                user.id,
-                updates,
-                customerChanged,
-            );
+            const promise = updateOrder(order.id, user.id, updates, customerChanged);
 
             await toast.promise(promise, {
                 loading: "Saving changes...",
@@ -521,8 +527,13 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                             className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
                                         >
                                             <option value="">-- Select a customer --</option>
-                                            <option value="NEW" className="font-medium text-indigo-600">+ New Customer</option>
-                                            {allCustomers.map((c) => (
+                                            <option
+                                                value="NEW"
+                                                className="font-medium text-indigo-600"
+                                            >
+                                                + New Customer
+                                            </option>
+                                            {allCustomers.map((c: any) => (
                                                 <option key={c.id} value={c.id}>
                                                     {c.fullName} ({c.email})
                                                 </option>
@@ -699,7 +710,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                                     }
                                                     className="block w-full px-3 py-2 border border-zinc-300 rounded-md text-sm"
                                                 >
-                                                    {selectedCustomer.addresses.map((addr) => (
+                                                    {selectedCustomer.addresses.map((addr: any) => (
                                                         <option key={addr.id} value={addr.id}>
                                                             {addr.address}{" "}
                                                             {addr.isPrimary ? "(Primary)" : ""}
@@ -732,13 +743,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                         <strong>Address:</strong>{" "}
                                         {(() => {
                                             const addrs = selectedCustomer?.addresses || [];
-                                            const primary = addrs.find((a: CustomerAddress) => a.isPrimary) || addrs[0];
+                                            const primary =
+                                                addrs.find((a: CustomerAddress) => a.isPrimary) ||
+                                                addrs[0];
                                             return primary ? (
                                                 <span>
-                                                    {primary.address} {primary.isPrimary ? "(Primary)" : ""}
+                                                    {primary.address}{" "}
+                                                    {primary.isPrimary ? "(Primary)" : ""}
                                                 </span>
                                             ) : (
-                                                <span className="text-sm text-zinc-500 italic">No address on file</span>
+                                                <span className="text-sm text-zinc-500 italic">
+                                                    No address on file
+                                                </span>
                                             );
                                         })()}
                                     </p>
@@ -769,6 +785,24 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                             ) : (
                                 <p>
                                     <strong>Delivery Method:</strong> {order.deliveryMethod}
+                                </p>
+                            )}
+                            {isEditMode ? (
+                                <div className="mt-3">
+                                    <label className="block text-sm font-medium text-zinc-700">
+                                        Wigger
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editedWigger}
+                                        onChange={(e) => setEditedWigger(e.target.value)}
+                                        placeholder="Enter wigger"
+                                        className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+                                    />
+                                </div>
+                            ) : (
+                                <p>
+                                    <strong>Wigger:</strong> {order.wigger?.name || "N/A"}
                                 </p>
                             )}
                             <p>

@@ -7,6 +7,7 @@ type OrderPayload = {
     items: { id: string; name: string; quantity: number; price: number }[];
     status: 'CREATED' | 'IN PROGRESS' | 'COMPLETED' | 'DISPATCHED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
     notes?: string;
+    wigger?: string;
     orderType: 'pickup' | 'delivery';
     deliveryCharge: number;
     discount: number;
