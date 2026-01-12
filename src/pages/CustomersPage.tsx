@@ -4,7 +4,6 @@ import { createCustomer, deleteCustomer, updateCustomer } from "../api/customers
 import AdminLayout from "../components/layouts/AdminLayout";
 import CustomerForm from "../components/admin/CustomerForm";
 import CustomerTable from "../components/admin/CustomerTable";
-import db from "../instant";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 import toast from "react-hot-toast";
 
@@ -14,12 +13,6 @@ type CustomersPageProps = {
 };
 
 const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: CustomersPageProps) => {
-    const { data, isLoading } = db.useQuery({
-        Customers: {
-            addresses: {},
-        },
-    });
-    const customers = (data?.Customers || []) as Customer[];
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,17 +79,9 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
         );
     }
 
-    if (isLoading) {
-        return (
-            <AdminLayout user={user} onLogout={onLogout} pageTitle="Customers">
-                <LoadingIndicator />
-            </AdminLayout>
-        );
-    }
-
     return (
         <AdminLayout pageTitle="Customers" user={user} onLogout={onLogout}>
-            <div className="p-4">
+            <div className="p-4 relative">
                 {isSubmitting && <LoadingIndicator />}
                 <div className="flex justify-between items-center mb-4">
                     <div>
@@ -110,7 +95,8 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                             setEditingCustomer(null);
                             setIsFormOpen(true);
                         }}
-                        className="px-4 py-2 bg-zinc-800 text-white rounded-md hover:bg-zinc-900 flex items-center gap-2"
+                        disabled={isSubmitting}
+                        className="px-4 py-2 bg-zinc-800 text-white rounded-md hover:bg-zinc-900 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span>+</span>
                         Add Customer
@@ -127,7 +113,6 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                     </div>
                 )}
                 <CustomerTable
-                    customers={customers}
                     onEdit={handleEditCustomer}
                     onDelete={handleDeleteCustomer}
                 />
