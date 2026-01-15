@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
 import type { User } from '../types';
 import DetailedSalesReport from '../components/admin/DetailedSalesReport';
-import EndOfDayReport from '../components/admin/EndOfDayReport';
 import SalesByItemReport from '../components/admin/SalesByItemReport';
 import OutstandingPaymentsReport from '../components/admin/OutstandingPaymentsReport';
 import CurrentStockLevelsReport from '../components/admin/CurrentStockLevelsReport';
 import LowStockReport from '../components/admin/LowStockReport';
-import InventoryValuationReport from '../components/admin/InventoryValuationReport';
 import StaffPerformanceReport from '../components/admin/StaffPerformanceReport';
 import OrderFulfillmentReport from '../components/admin/OrderFulfillmentReport';
+import WiggerReport from '../components/admin/WiggerReport';
 
 interface ReportsPageProps {
   user: User;
@@ -24,8 +23,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user, onLogout }) => {
       // Sales & Financial Reports
       case 'detailed-sales':
         return <DetailedSalesReport />;
-      case 'end-of-day':
-        return <EndOfDayReport />;
       case 'sales-by-item':
         return <SalesByItemReport />;
       case 'outstanding-payments':
@@ -35,13 +32,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user, onLogout }) => {
         return <CurrentStockLevelsReport />;
       case 'low-stock':
         return <LowStockReport />;
-      case 'inventory-valuation':
-        return <InventoryValuationReport />;
       // Operational Reports
       case 'staff-performance':
         return <StaffPerformanceReport />;
       case 'order-fulfillment':
         return <OrderFulfillmentReport />;
+      case 'wigger':
+        return <WiggerReport />;
       default:
         return <p>Select a report to view.</p>;
     }
@@ -56,18 +53,17 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user, onLogout }) => {
             <ul className="space-y-2">
               <li className="font-bold text-lg">Sales & Financial</li>
               <li><button onClick={() => setSelectedReport('detailed-sales')} className="text-blue-500 hover:underline">Detailed Sales Report</button></li>
-              <li><button onClick={() => setSelectedReport('end-of-day')} className="text-blue-500 hover:underline">End-of-Day Report</button></li>
               <li><button onClick={() => setSelectedReport('sales-by-item')} className="text-blue-500 hover:underline">Sales by Item Report</button></li>
               <li><button onClick={() => setSelectedReport('outstanding-payments')} className="text-blue-500 hover:underline">Outstanding Payments Report</button></li>
 
               <li className="font-bold text-lg pt-4">Inventory & Supplier</li>
               <li><button onClick={() => setSelectedReport('current-stock-levels')} className="text-blue-500 hover:underline">Current Stock Levels</button></li>
               <li><button onClick={() => setSelectedReport('low-stock')} className="text-blue-500 hover:underline">Low Stock Report</button></li>
-              <li><button onClick={() => setSelectedReport('inventory-valuation')} className="text-blue-500 hover:underline">Inventory Valuation Report</button></li>
 
               <li className="font-bold text-lg pt-4">Operational</li>
               <li><button onClick={() => setSelectedReport('staff-performance')} className="text-blue-500 hover:underline">Staff Performance Report</button></li>
               <li><button onClick={() => setSelectedReport('order-fulfillment')} className="text-blue-500 hover:underline">Order Fulfillment Report</button></li>
+              <li><button onClick={() => setSelectedReport('wigger')} className="text-blue-500 hover:underline">Wigger Report</button></li>
             </ul>
           </div>
           <div className="md:col-span-3">
