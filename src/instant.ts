@@ -79,6 +79,11 @@ export const _schema = i.schema({
       quantityAfter: i.number().optional(),
       createdAt: i.number().indexed(),
     }),    
+    Wigger: i.entity({
+      name: i.string().unique(),
+      createdAt: i.number(),
+      updatedAt: i.number(),
+    }),    
   },
   links: {
     AttributeCategoryItem: {
@@ -105,6 +110,10 @@ export const _schema = i.schema({
       forward: { on: "Customers", has: "many", label: "addresses" },
       reverse: { on: "CustomerAddress", has: "one", label: "customer" },
     },
+    WiggerOrder: {
+      forward: { on: "Orders", has: "one", label: "wigger" },
+      reverse: { on: "Wigger", has: "many", label: "orders" },
+    },    
   },
 });
 

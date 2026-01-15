@@ -38,9 +38,12 @@ export type Settings = {
     businessLogo?: string;
 }
 
+export type Wigger = InstaQLEntity<Schema, 'Wigger'>;
+
 export type Order = InstaQLEntity<Schema, 'Orders'> & {
     customer: Customer;
     posOperator: User;
+    wigger?: Wigger;
     customerId?: string;
 };
 export type CustomerAddress = InstaQLEntity<Schema, 'CustomerAddress'>;

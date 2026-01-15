@@ -5,14 +5,19 @@ import type { Order, User } from "../types";
 import AdminLayout from "../components/layouts/AdminLayout";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 import OrderDetailsModal from "../components/orders/OrderDetailsModal";
+import { Check, X } from "lucide-react";
+import { updateOrder } from "../api/orders";
+import { toast } from "react-hot-toast";
 
 const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   const { isLoading, error, data } = db.useQuery({
     Orders: {
       customer: {},
       posOperator: {},
+      wigger: {},
     },
     Users: {},
+
   });
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -22,6 +27,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     orderStatus: "",
     customer: "",
     orderNumber: "",
+    wigger: "",
     posOperator: "",
     createdAtStart: "",
     createdAtEnd: "",
@@ -36,6 +42,11 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   const [hoveredOrder, setHoveredOrder] = useState<Order | null>(null);
   const [popupPos, setPopupPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  // Inline wigger edit state
+  const [editingWiggerId, setEditingWiggerId] = useState<string | null>(null);
+  const [wiggerForEdit, setWiggerForEdit] = useState("");
+  const [savingWiggerId, setSavingWiggerId] = useState<string | null>(null);
+
   const handleFilterChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -47,7 +58,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   };
 
   const filteredOrders = useMemo(() => {
-    let orders = (data?.Orders as Order[]) || [];
+    let orders = ((data as any)?.Orders as Order[]) || [];
 
     if (filters.paymentStatus) {
       orders = orders.filter((o) => o.paymentStatus === filters.paymentStatus);
@@ -70,6 +81,11 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     if (filters.orderNumber) {
       orders = orders.filter((o) =>
         (o.orderNumber || "").toLowerCase().includes(filters.orderNumber.toLowerCase())
+      );
+    }
+    if (filters.wigger) {
+      orders = orders.filter((o) =>
+        (o.wigger?.name || "").toLowerCase().includes(filters.wigger.toLowerCase())
       );
     }
     if (filters.posOperator) {
@@ -99,7 +115,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
 
     // Sort by most recent on top
     return orders.sort((a, b) => b.createdAt - a.createdAt);
-  }, [data?.Orders, filters]);
+  }, [(data as any)?.Orders, filters]);
 
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -163,6 +179,30 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     if (selectedOrder?.id === orderId) {
       setSelectedOrder({ ...selectedOrder, paymentStatus: status });
     }
+  };
+
+  const handleWiggerEdit = (orderId: string, currentWigger: string) => {
+    setEditingWiggerId(orderId);
+    setWiggerForEdit(currentWigger || "");
+  };
+
+  const handleWiggerSave = async (orderId: string) => {
+    setSavingWiggerId(orderId);
+    try {
+      await updateOrder(orderId, user.id, { wigger: wiggerForEdit || undefined } as any);
+      toast.success("Wigger updated successfully!");
+      setEditingWiggerId(null);
+    } catch (error) {
+      console.error("Failed to update wigger:", error);
+      toast.error("Failed to update wigger");
+    } finally {
+      setSavingWiggerId(null);
+    }
+  };
+
+  const handleWiggerCancel = () => {
+    setEditingWiggerId(null);
+    setWiggerForEdit("");
   };
 
   const users = (data?.Users as User[]) || [];
@@ -302,54 +342,62 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                 className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
               />
             </div>
-            <div className="md:col-span-3 grid grid-cols-3 gap-4"></div>
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-700">
-                  Created At (Start)
-                </label>
-                <input
-                  type="date"
-                  name="createdAtStart"
-                  onChange={handleFilterChange}
-                  className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700">
-                  Created At (End)
-                </label>
-                <input
-                  type="date"
-                  name="createdAtEnd"
-                  onChange={handleFilterChange}
-                  className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Wigger
+              </label>
+              <input
+                type="text"
+                name="wigger"
+                placeholder="Filter by wigger..."
+                onChange={handleFilterChange}
+                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+              />
             </div>
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-700">
-                  Updated At (Start)
-                </label>
-                <input
-                  type="date"
-                  name="updatedAtStart"
-                  onChange={handleFilterChange}
-                  className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700">
-                  Updated At (End)
-                </label>
-                <input
-                  type="date"
-                  name="updatedAtEnd"
-                  onChange={handleFilterChange}
-                  className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
-                />
-              </div>
+            <div></div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Created At (Start)
+              </label>
+              <input
+                type="date"
+                name="createdAtStart"
+                onChange={handleFilterChange}
+                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Created At (End)
+              </label>
+              <input
+                type="date"
+                name="createdAtEnd"
+                onChange={handleFilterChange}
+                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Updated At (Start)
+              </label>
+              <input
+                type="date"
+                name="updatedAtStart"
+                onChange={handleFilterChange}
+                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-700">
+                Updated At (End)
+              </label>
+              <input
+                type="date"
+                name="updatedAtEnd"
+                onChange={handleFilterChange}
+                className="mt-1 block w-full px-3 py-2 border border-zinc-300 rounded-md shadow-sm focus:outline-none focus:ring-zinc-500 focus:border-zinc-500 sm:text-sm"
+              />
             </div>
           </div>
         </div>
@@ -378,13 +426,13 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider"
                     >
-                      POS Operator
+                      Wigger
                     </th>
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider"
                     >
-                      Total Amount
+                      POS Operator
                     </th>
                     <th
                       scope="col"
@@ -430,11 +478,50 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
                         {order.customer?.fullName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
-                        {order.posOperator?.fullName}
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {editingWiggerId === order.id ? (
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              value={wiggerForEdit}
+                              onChange={(e) => setWiggerForEdit(e.target.value)}
+                              disabled={savingWiggerId === order.id}
+                              className="px-2 py-1 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:bg-zinc-100"
+                              autoFocus
+                              placeholder="Enter wigger"
+                            />
+                            <button
+                              onClick={() => handleWiggerSave(order.id)}
+                              disabled={savingWiggerId === order.id}
+                              className="p-1 text-green-600 hover:text-green-700 hover:bg-green-50 rounded disabled:opacity-50"
+                              title="Save"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={handleWiggerCancel}
+                              disabled={savingWiggerId === order.id}
+                              className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50"
+                              title="Cancel"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span 
+                            onClick={() => handleWiggerEdit(order.id, order.wigger?.name || "")}
+                            className="cursor-text hover:bg-zinc-100 px-2 py-1 rounded inline-block"
+                            title="Click to edit"
+                          >
+                            {order.wigger?.name || "N/A"}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
-                        {order.totalAmount}
+                        {order.posOperator?.fullName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
                         {order.paymentStatus}

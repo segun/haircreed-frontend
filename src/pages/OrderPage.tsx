@@ -43,6 +43,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   });
 
   const [notes, setNotes] = useState("");
+  const [wigger, setWigger] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [orderType, setOrderType] = useState<"pickup" | "delivery">("pickup");
   const [deliveryCharge, setDeliveryCharge] = useState(0);
@@ -186,6 +187,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       })),
       status: "CREATED" as const,
       notes: orderItems.map((item) => item.notes).filter(Boolean).join(", "),
+      wigger: wigger || undefined,
       orderType: orderType,
       deliveryCharge: deliveryCharge,
       discount: discount,
@@ -209,6 +211,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
         newAddress: null,
       });
       setNotes("");
+      setWigger("");
       setDiscount(0);
       setDeliveryCharge(0);
     } catch (error) {
@@ -546,6 +549,22 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
             <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
               <h2 className="text-lg font-medium mb-4">Order Options</h2>
               <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="wigger"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Wigger
+                  </label>
+                  <input
+                    id="wigger"
+                    type="text"
+                    value={wigger}
+                    onChange={(e) => setWigger(e.target.value)}
+                    placeholder="Enter wigger"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  />
+                </div>
                 <div className="flex justify-around">
                   <button
                     onClick={() => setOrderType("pickup")}
