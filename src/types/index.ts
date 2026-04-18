@@ -105,3 +105,44 @@ export type DashboardDetails = {
   inventoryItems: number;
   recentActivity: RecentActivity[];
 };
+
+export type Product = {
+  id: string;
+  name: string;
+  quantity: number;
+  createdAt: number;
+  updatedAt: number;
+  addedByUserId?: string | null;
+  addedByUserFullname?: string | null;
+  stockAudits?: ProductStockAudit[];
+  usageAudits?: ProductUsageAudit[];
+};
+
+export type ProductStockAudit = {
+  id: string;
+  productId: string;
+  action: string;
+  quantityAdded: number;
+  quantityBefore?: number | null;
+  quantityAfter?: number | null;
+  userId?: string | null;
+  userFullname?: string | null;
+  createdAt: number;
+  product?: Product;
+};
+
+export type ProductUsageAudit = {
+  id: string;
+  productId: string;
+  orderId: string;
+  action: string;
+  quantityUsed: number;
+  userId?: string | null;
+  userFullname?: string | null;
+  createdAt: number;
+  product?: Product;
+  order?: {
+    id: string;
+    orderNumber?: string;
+  };
+};

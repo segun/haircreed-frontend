@@ -51,6 +51,33 @@ export const _schema = i.schema({
       headSize: i.string().optional(),
       createdAt: i.number(),
     }),
+    Products: i.entity({
+      name: i.string().indexed(),
+      quantity: i.number().indexed(),
+      createdAt: i.number().indexed(),
+      updatedAt: i.number(),
+      addedByUserId: i.string().optional(),
+      addedByUserFullname: i.string().optional(),
+    }),
+    ProductStockAudits: i.entity({
+      productId: i.string().indexed(),
+      action: i.string().indexed(),
+      quantityAdded: i.number(),
+      quantityBefore: i.number().optional(),
+      quantityAfter: i.number().optional(),
+      userId: i.string().optional(),
+      userFullname: i.string().optional(),
+      createdAt: i.number().indexed(),
+    }),
+    ProductUsageAudits: i.entity({
+      productId: i.string().indexed(),
+      orderId: i.string().indexed(),
+      action: i.string().indexed(),
+      quantityUsed: i.number(),
+      userId: i.string().optional(),
+      userFullname: i.string().optional(),
+      createdAt: i.number().indexed(),
+    }),    
     CustomerAddress: i.entity({
       address: i.string(),
       isPrimary: i.boolean(),
@@ -106,6 +133,18 @@ export const _schema = i.schema({
       forward: { on: "InventoryItems", has: "many", label: "attributes" },
       reverse: { on: "AttributeItem", has: "many", label: "inventoryItems" },
     },
+    ProductStockAuditProduct: {
+      forward: { on: "ProductStockAudits", has: "one", label: "product" },
+      reverse: { on: "Products", has: "many", label: "stockAudits" },
+    },
+    ProductUsageAuditProduct: {
+      forward: { on: "ProductUsageAudits", has: "one", label: "product" },
+      reverse: { on: "Products", has: "many", label: "usageAudits" },
+    },
+    ProductUsageAuditOrder: {
+      forward: { on: "ProductUsageAudits", has: "one", label: "order" },
+      reverse: { on: "Orders", has: "many", label: "productUsageAudits" },
+    },    
     CustomerCustomerAddresses: {
       forward: { on: "Customers", has: "many", label: "addresses" },
       reverse: { on: "CustomerAddress", has: "one", label: "customer" },

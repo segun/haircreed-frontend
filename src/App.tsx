@@ -15,6 +15,8 @@ import AppSettingsPage from './pages/AppSettingsPage';
 import ReportsPage from './pages/ReportsPage';
 import UserSettingsPage from './pages/UserSettingsPage';
 import CustomersPage from './pages/CustomersPage';
+import ProductsPage from './pages/ProductsPage';
+import AuditsPage from './pages/AuditsPage';
 
 function App() {
   const [user, setUser] = useState<User | null>(() => {
@@ -93,6 +95,8 @@ function App() {
       <Route path="/inventory" element={<InventoryPage user={user} onLogout={handleLogout} />} />
       <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
       <Route path="/customers" element={<CustomersPage user={user} onLogout={handleLogout} />} />
+      <Route path="/products" element={<ProductsPage user={user} onLogout={handleLogout} />} />
+      <Route path="/audits" element={<AuditsPage user={user} onLogout={handleLogout} />} />
       <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
       <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
       <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />

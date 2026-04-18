@@ -7,6 +7,7 @@ import type {
   Customer,
   CustomerAddress,
   CustomerSearchType,
+  Product,
 } from "../types";
 import db from "../instant";
 import { createCustomer, updateCustomer } from "../api/customers";
@@ -14,6 +15,8 @@ import { toast } from "react-hot-toast";
 import CustomerInformationForm from "../components/orders/CustomerInformationForm";
 import { createOrder } from "../api/orders";
 import LoadingIndicator from "../components/common/LoadingIndicator";
+import { UseProductModal } from "../components/common/UseProductModal";
+import { listProducts } from "../api/products";
 
 interface OrderPageProps {
   user: User;
@@ -55,6 +58,9 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       newAddress?: Partial<CustomerAddress> | null;
     }
   >({});
+  const [isUseProductOpen, setIsUseProductOpen] = useState(false);
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [selectedProductForUse, setSelectedProductForUse] = useState<Product | null>(null);
   const [customerQuery, setCustomerQuery] = useState<{
     query: string;
     type: CustomerSearchType;
@@ -235,6 +241,21 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     setCustomer((prev) => ({ ...prev, newAddress: address }));
   };
 
+  const handleUseProductClick = (product: Product) => {
+    setSelectedProductForUse(product);
+    setIsUseProductOpen(true);
+  };
+
+  const handleUseProductSubmit = async () => {
+    // Reload products after usage to reflect quantity changes
+    try {
+      const products = await listProducts();
+      setAvailableProducts(products);
+    } catch (err) {
+      console.error('Failed to reload products:', err);
+    }
+  };
+
   const isCustomerInfoComplete = () => {
     return (
       customer.fullName &&
@@ -270,6 +291,19 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       (orderType === "delivery" ? deliveryCharge : 0);
     setTotalAmount(newTotal);
   }, [orderItems, discount, orderType, deliveryCharge, vatRate]);
+
+  // Load available products for UseProductModal
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const products = await listProducts();
+        setAvailableProducts(products);
+      } catch (err) {
+        console.error('Failed to load products:', err);
+      }
+    };
+    loadProducts();
+  }, []);
 
   const getInventoryItemName = (attributes: AttributeItem[]) => {
     return attributes
@@ -641,6 +675,15 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                   <span>Total</span>
                   <span>${totalAmount.toFixed(2)}</span>
                 </div>
+                {availableProducts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsUseProductOpen(true)}
+                    className="w-full mt-3 flex justify-center py-2 px-4 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-500"
+                  >
+                    Use Product
+                  </button>
+                )}
                 <button
                   onClick={handleCreateOrder}
                   disabled={
@@ -649,6 +692,53 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                   className="w-full mt-6 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   Create Order
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Use Product Modal */}
+      {selectedProductForUse && (
+        <UseProductModal
+          isOpen={isUseProductOpen}
+          product={selectedProductForUse}
+          onSubmit={handleUseProductSubmit}
+          onClose={() => {
+            setIsUseProductOpen(false);
+            setSelectedProductForUse(null);
+          }}
+        />
+      )}
+
+      {/* Product Selector Modal - for choosing which product to use */}
+      {isUseProductOpen && !selectedProductForUse && availableProducts.length > 0 && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsUseProductOpen(false)}></div>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Select Product to Use</h3>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {availableProducts.map(product => (
+                    <button
+                      key={product.id}
+                      onClick={() => handleUseProductClick(product)}
+                      className="w-full text-left p-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm text-gray-500">Available: {product.quantity} unit(s)</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  onClick={() => setIsUseProductOpen(false)}
+                  className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
                 </button>
               </div>
             </div>

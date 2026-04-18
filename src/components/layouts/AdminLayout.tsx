@@ -120,6 +120,7 @@ export default function AdminLayout({
   const navigation = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
     { name: "Inventory", path: "/inventory", icon: <Package size={20} /> },
+    { name: "Products", path: "/products", icon: <Package size={20} /> },
     { name: "Point of Sale", path: "/orders", icon: <ShoppingCart size={20} /> },
     { name: "View Orders", path: "/view-orders", icon: <ShoppingCart size={20} /> },
     { name: "Reports", path: "/reports", icon: <BarChart2 size={20} /> },
@@ -134,6 +135,7 @@ export default function AdminLayout({
     { name: "System Settings", path: "/settings", icon: <Settings size={20} /> },
     { name: "Customers", path: "/customers", icon: <UserCircle size={20} /> },
     { name: "Users", path: "/users", icon: <Users size={20} /> },
+    { name: "Audits", path: "/audits", icon: <BarChart2 size={20} /> },
   ];
 
   useEffect(() => {
