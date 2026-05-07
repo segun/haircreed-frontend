@@ -57,10 +57,6 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!selectedOrder || !selectedOrder.id) {
-      newErrors.orderId = 'Please select an order';
-    }
-
     if (formData.quantity < 1) {
       newErrors.quantity = 'Quantity must be at least 1';
     }
@@ -81,10 +77,14 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
     try {
       await useProduct({
         productId: product.id,
-        orderId: selectedOrder!.id,
+        orderId: selectedOrder?.id,
         quantity: formData.quantity,
       });
-      toast.success(`${formData.quantity} unit(s) of "${product.name}" used for order ${selectedOrder!.orderNumber}`);
+      toast.success(
+        selectedOrder
+          ? `${formData.quantity} unit(s) of "${product.name}" used for order ${selectedOrder.orderNumber}`
+          : `${formData.quantity} unit(s) of "${product.name}" used`,
+      );
       setFormData({ orderId: '', quantity: 1 });
       setSelectedOrder(null);
       setSearchQuery('');
@@ -132,7 +132,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
         {/* Order Selector */}
         <div>
           <label className="block text-sm font-medium text-zinc-700 mb-1">
-            Order <span className="text-red-500">*</span>
+            Order (Optional)
           </label>
 
           {selectedOrder ? (
@@ -219,6 +219,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
           )}
 
           {errors.orderId && <p className="mt-1 text-sm text-red-500">{errors.orderId}</p>}
+          <p className="mt-1 text-xs text-zinc-500">Leave blank to record product usage without an order link.</p>
         </div>
 
         {/* Quantity Field */}
@@ -252,7 +253,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
         <div className="flex gap-3 pt-4">
           <button
             type="submit"
-            disabled={isSubmitting || !selectedOrder}
+            disabled={isSubmitting}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? 'Using...' : 'Use Product'}

@@ -134,7 +134,7 @@ export type ProductStockAudit = {
 export type ProductUsageAudit = {
   id: string;
   productId: string;
-  orderId: string;
+  orderId?: string;
   action: string;
   quantityUsed: number;
   userId?: string | null;

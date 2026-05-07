@@ -28,7 +28,7 @@ export const ProductUsageAuditTable: React.FC<ProductUsageAuditTableProps> = ({
         a.product?.name.toLowerCase().includes(q) ||
         a.productId.toLowerCase().includes(q) ||
         a.order?.orderNumber?.toLowerCase().includes(q) ||
-        a.orderId.toLowerCase().includes(q) ||
+        a.orderId?.toLowerCase().includes(q) ||
         a.userFullname?.toLowerCase().includes(q)
     );
   }, [audits, debouncedQuery]);
@@ -72,7 +72,7 @@ export const ProductUsageAuditTable: React.FC<ProductUsageAuditTableProps> = ({
               filteredItems.map((audit) => (
                 <tr key={audit.id} className="hover:bg-zinc-50 transition-colors">
                   <td className="px-6 py-4 text-sm font-medium text-zinc-900">{audit.product?.name || audit.productId}</td>
-                  <td className="px-6 py-4 text-sm text-zinc-600 font-mono">{audit.order?.orderNumber || audit.orderId}</td>
+                  <td className="px-6 py-4 text-sm text-zinc-600 font-mono">{audit.order?.orderNumber || audit.orderId || '—'}</td>
                   <td className="px-6 py-4 text-sm font-medium text-zinc-900">{audit.quantityUsed}</td>
                   <td className="px-6 py-4 text-sm text-zinc-500">{audit.userFullname || audit.userId || '—'}</td>
                   <td className="px-6 py-4 text-sm text-zinc-500">{formatDate(audit.createdAt)}</td>

@@ -59,22 +59,27 @@ export const addStock = async (id: string, payload: { quantity: number }): Promi
   return response.json();
 };
 
-// Use product (linked to order)
+// Use product (optionally linked to an order)
 export const useProduct = async (payload: {
   productId: string;
-  orderId: string;
+  orderId?: string;
   quantity: number;
 }): Promise<Product> => {
+  const requestBody: Record<string, string | number> = {
+    productId: payload.productId,
+    quantity: payload.quantity,
+    userId: getLoggedInUserId(),
+    origin: 'WEB',
+  };
+
+  if (payload.orderId) {
+    requestBody.orderId = payload.orderId;
+  }
+
   const response = await fetch(`${BASE_URL}/use`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      productId: payload.productId,
-      orderId: payload.orderId,
-      quantity: payload.quantity,
-      userId: getLoggedInUserId(),
-      origin: 'WEB',
-    }),
+    body: JSON.stringify(requestBody),
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
