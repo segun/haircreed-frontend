@@ -4,7 +4,7 @@ import db from '../../instant';
 import { useCurrency } from '../../context/CurrencyContext';
 
 const StaffPerformanceReport: React.FC = () => {
-  const { currency, formatCurrency } = useCurrency();
+  const { formatCurrency } = useCurrency();
   const { isLoading, error, data } = db.useQuery({
     Users: {
       createdOrders: {},

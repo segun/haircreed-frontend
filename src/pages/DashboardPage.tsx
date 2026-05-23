@@ -25,7 +25,7 @@ type DashboardPageProps = {
 };
 
 export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
-    const { currency, formatCurrency } = useCurrency();
+    const { formatCurrency } = useCurrency();
     const [dashboardDetails, setDashboardDetails] = useState<DashboardDetails | null>(null);
     const [loading, setLoading] = useState(true);
 

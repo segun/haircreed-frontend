@@ -13,7 +13,7 @@ type InventoryItemTableProps = {
 };
 
 const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, onDelete, user }) => {
-    const { currency, formatCurrency } = useCurrency();
+    const { formatCurrency } = useCurrency();
     const [itemToDelete, setItemToDelete] = useState<InventoryItemWithDetails | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [debouncedQuery, setDebouncedQuery] = useState<string>('');
