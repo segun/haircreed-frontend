@@ -10,6 +10,7 @@ import type {
   Product,
 } from "../types";
 import db from "../instant";
+import { useCurrency } from "../context/CurrencyContext";
 import { createCustomer, updateCustomer } from "../api/customers";
 import { toast } from "react-hot-toast";
 import CustomerInformationForm from "../components/orders/CustomerInformationForm";
@@ -32,6 +33,7 @@ interface OrderItem {
 }
 
 const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
+  const { currency, formatCurrency } = useCurrency();
   const [isProcessing, setIsProcessing] = useState(false);
   const {
     isLoading: isDataLoading,
@@ -497,7 +499,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                           id="total"
                           className="mt-1 p-2 block w-full border rounded-md bg-gray-100"
                         >
-                          ${(Number(quantity) * Number(price)).toFixed(2)}
+                          {formatCurrency(Number(quantity) * Number(price))}
                         </div>
                       </div>
                     </div>
@@ -543,7 +545,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                       <span className="col-span-1 sm:col-span-2">{item.name}</span>
                       <span>Qty: {item.quantity}</span>
                       <div className="flex justify-between items-center">
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
+                        <span>{formatCurrency(item.price * item.quantity)}</span>
                         <button
                           onClick={() => handleRemoveItem(item.id)}
                           className="text-red-500 hover:text-red-700 text-sm sm:text-base"
@@ -647,11 +649,11 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>VAT ({vatRate}%)</span>
-                  <span>${vat.toFixed(2)}</span>
+                  <span>{formatCurrency(vat)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Discount</span>
@@ -662,28 +664,19 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
                       setDiscount(parseFloat(e.target.value) || 0)
                     }
                     className="w-24 p-1 border rounded"
-                    placeholder="$"
+                    placeholder={currency}
                   />
                 </div>
                 {orderType === "delivery" && (
                   <div className="flex justify-between">
                     <span>Delivery Charge</span>
-                    <span>${deliveryCharge.toFixed(2)}</span>
+                    <span>{formatCurrency(deliveryCharge)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>${totalAmount.toFixed(2)}</span>
+                  <span>{formatCurrency(totalAmount)}</span>
                 </div>
-                {availableProducts.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsUseProductOpen(true)}
-                    className="w-full mt-3 flex justify-center py-2 px-4 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-500"
-                  >
-                    Use Product
-                  </button>
-                )}
                 <button
                   onClick={handleCreateOrder}
                   disabled={

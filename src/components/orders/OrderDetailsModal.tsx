@@ -4,11 +4,12 @@ import { toast } from "react-hot-toast";
 import type { Order, User, CustomerAddress, CustomerSearchType } from "../../types";
 import Modal from "../common/Modal";
 import { updateOrder, deleteOrder } from "../../api/orders";
-import { downloadReceipt } from "../../api/pdf";
+import { downloadReceipt, type ReceiptItem } from "../../api/pdf";
 import { updateCustomer, createCustomer } from "../../api/customers";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { Edit, Save, X, Search, PlusCircle } from "lucide-react";
 import db from "../../instant";
+import { useCurrency } from "../../context/CurrencyContext";
 
 interface OrderDetailsModalProps {
     isOpen: boolean;
@@ -38,12 +39,15 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     onOrderStatusChange,
     onPaymentStatusChange,
 }) => {
+    const { currency, formatCurrency } = useCurrency();
     const [isConfirmOpen, setConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
     const [confirmMessage, setConfirmMessage] = useState("");
     const [confirmTitle, setConfirmTitle] = useState("Confirm Action");
     const [isEditMode, setIsEditMode] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isReceiptMode, setIsReceiptMode] = useState(false);
+    const [receiptItems, setReceiptItems] = useState<ReceiptItem[]>([]);
 
     // Customer management state
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>(order.customer?.id || "");
@@ -78,6 +82,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         Customers: { addresses: {} },
     });
 
+    const { data: settingsData } = db.useQuery({ AppSettings: {} });
+    const vatRate = (settingsData?.AppSettings?.[0] as any)?.settings?.vatRate || 0;
+
     const allCustomers = customersData?.Customers || [];
     // Get selected customer details
     const selectedCustomer = allCustomers.find((c: any) => c.id === selectedCustomerId) || null;
@@ -97,6 +104,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         setIsEditMode(false);
         setIsAddingNewAddress(false);
         setIsNewCustomerMode(false);
+        setIsReceiptMode(false);
     }, [order]);
 
     // Update selected address when customer changes
@@ -397,17 +405,48 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         }
     };
 
-    const handleDownloadReceipt = async () => {
-        const promise = downloadReceipt(order.id);
+    const handleDownloadReceiptClick = () => {
+        setReceiptItems(
+            order.items.map((item: any) => ({
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+            }))
+        );
+        setIsReceiptMode(true);
+    };
+
+    const handleGenerateReceipt = async () => {
+        const subtotal = receiptItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
+        const vat = subtotal * (vatRate / 100);
+        const discountAmount = order.discountAmount || 0;
+        const deliveryCharge = order.deliveryCharge || 0;
+        const total = subtotal + vat - discountAmount + deliveryCharge;
+        const promise = downloadReceipt(order.id, receiptItems, { subtotal, vat, discountAmount, deliveryCharge, total });
         try {
             await toast.promise(promise, {
                 loading: "Downloading receipt...",
                 success: "Receipt downloaded successfully!",
                 error: (err: Error) => `Failed to download receipt: ${err.message}`,
             });
+            setIsReceiptMode(false);
         } catch (error) {
             console.error("Failed to download receipt:", error);
         }
+    };
+
+    const handleCancelReceiptMode = () => {
+        setIsReceiptMode(false);
+        setReceiptItems([]);
+    };
+
+    const updateReceiptItem = (index: number, field: keyof ReceiptItem, value: string | number) => {
+        setReceiptItems((prev) =>
+            prev.map((item, i) =>
+                i === index ? { ...item, [field]: field === "name" ? value : Number(value) } : item
+            )
+        );
     };
 
     return (
@@ -766,7 +805,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                 Order Information
                             </h3>
                             <p>
-                                <strong>Total Amount:</strong> ${order.totalAmount.toFixed(2)}
+                                <strong>Total Amount:</strong> {formatCurrency(order.totalAmount)}
                             </p>
                             {isEditMode ? (
                                 <div className="mt-3">
@@ -880,43 +919,119 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                             )}
                         </div>
                         <div className="md:col-span-2">
-                            <h3 className="text-lg font-medium text-zinc-900">Order Items</h3>
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-lg font-medium text-zinc-900">Order Items</h3>
+                                {isReceiptMode && (
+                                    <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                                        Editing for receipt
+                                    </span>
+                                )}
+                            </div>
                             <div className="overflow-x-auto mt-2">
                                 <table className="min-w-full divide-y divide-zinc-200">
                                     <thead className="bg-zinc-50">
                                         <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                                                 Item
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                                                 Quantity
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                                                 Price
                                             </th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                                                 Total
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white">
-                                        {order.items.map((item: any) => (
-                                            <tr key={item.id}>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">
-                                                    {item.name}
+                                    <tbody className="bg-white divide-y divide-zinc-100">
+                                        {isReceiptMode
+                                            ? receiptItems.map((item, index) => (
+                                                  <tr key={item.id} className="bg-amber-50/40">
+                                                      <td className="px-4 py-2">
+                                                          <input
+                                                              type="text"
+                                                              value={item.name}
+                                                              onChange={(e) =>
+                                                                  updateReceiptItem(
+                                                                      index,
+                                                                      "name",
+                                                                      e.target.value
+                                                                  )
+                                                              }
+                                                              className="w-full px-2 py-1 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                                                          />
+                                                      </td>
+                                                      <td className="px-4 py-2">
+                                                          <input
+                                                              type="number"
+                                                              min="1"
+                                                              value={item.quantity}
+                                                              onChange={(e) =>
+                                                                  updateReceiptItem(
+                                                                      index,
+                                                                      "quantity",
+                                                                      e.target.value
+                                                                  )
+                                                              }
+                                                              className="w-20 px-2 py-1 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                                                          />
+                                                      </td>
+                                                      <td className="px-4 py-2">
+                                                          <div className="flex items-center">
+                                                              <span className="text-sm text-zinc-500 mr-1">{currency}</span>
+                                                              <input
+                                                                  type="number"
+                                                                  min="0"
+                                                                  step="0.01"
+                                                                  value={item.price}
+                                                                  onChange={(e) =>
+                                                                      updateReceiptItem(
+                                                                          index,
+                                                                          "price",
+                                                                          e.target.value
+                                                                      )
+                                                                  }
+                                                                  className="w-24 px-2 py-1 border border-zinc-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                                                              />
+                                                          </div>
+                                                      </td>
+                                                      <td className="px-4 py-2 whitespace-nowrap text-sm text-zinc-500">
+                                                          {formatCurrency(item.quantity * item.price)}
+                                                      </td>
+                                                  </tr>
+                                              ))
+                                            : order.items.map((item: any) => (
+                                                  <tr key={item.id}>
+                                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">
+                                                          {item.name}
+                                                      </td>
+                                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
+                                                          {item.quantity}
+                                                      </td>
+                                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
+                                                          {formatCurrency(item.price)}
+                                                      </td>
+                                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
+                                                          {formatCurrency(item.quantity * item.price)}
+                                                      </td>
+                                                  </tr>
+                                              ))}
+                                    </tbody>
+                                    {isReceiptMode && (
+                                        <tfoot className="bg-zinc-50">
+                                            <tr>
+                                                <td colSpan={3} className="px-4 py-2 text-sm font-medium text-zinc-700 text-right">
+                                                    Receipt Total:
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
-                                                    {item.quantity}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
-                                                    ${item.price.toFixed(2)}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
-                                                    ${(item.quantity * item.price).toFixed(2)}
+                                                <td className="px-4 py-2 text-sm font-semibold text-zinc-900">
+                                                    {formatCurrency(receiptItems
+                                                        .reduce((sum, item) => sum + item.quantity * item.price, 0))}
                                                 </td>
                                             </tr>
-                                        ))}
-                                    </tbody>
+                                        </tfoot>
+                                    )}
                                 </table>
                             </div>
                         </div>
@@ -944,14 +1059,32 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                             </div>
                         )}
 
-                        {order.paymentStatus === "PAID" && (
+                        {order.paymentStatus === "PAID" && !isReceiptMode && user.role === "SUPER_ADMIN" && (
                             <button
                                 type="button"
                                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
-                                onClick={handleDownloadReceipt}
+                                onClick={handleDownloadReceiptClick}
                             >
-                                Receipt
+                                Download/Send Receipt
                             </button>
+                        )}
+                        {isReceiptMode && (
+                            <>
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                                    onClick={handleGenerateReceipt}
+                                >
+                                    Generate Receipt
+                                </button>
+                                <button
+                                    type="button"
+                                    className="px-4 py-2 border border-zinc-300 rounded-md shadow-sm text-sm font-medium text-zinc-700 bg-white hover:bg-zinc-50"
+                                    onClick={handleCancelReceiptMode}
+                                >
+                                    Cancel
+                                </button>
+                            </>
                         )}
                         <button
                             type="button"

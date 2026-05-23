@@ -1,8 +1,10 @@
 
 import React, { useMemo } from 'react';
 import db from '../../instant';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const OutstandingPaymentsReport: React.FC = () => {
+  const { formatCurrency } = useCurrency();
   const { isLoading, error, data } = db.useQuery({
     Orders: {
       $: {
@@ -72,7 +74,7 @@ const OutstandingPaymentsReport: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   {order.customer?.email || order.customer?.phoneNumber}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">{order.totalAmount}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.totalAmount)}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {/* NOTE: Schema does not have amountPaid, assuming 0 for non-Paid orders */}
                   0

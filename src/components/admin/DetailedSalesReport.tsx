@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from "react";
 import db from "../../instant";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const DetailedSalesReport: React.FC = () => {
+  const { formatCurrency } = useCurrency();
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
@@ -168,16 +170,16 @@ const DetailedSalesReport: React.FC = () => {
                   ))}
                 </ul>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">{order.amount}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{order.vatAmount}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.amount)}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.vatAmount)}</td>
               <td className="px-6 py-4 whitespace-nowrap">
-                {order.discountAmount}
+                {formatCurrency(order.discountAmount)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                {order.deliveryCharge}
+                {formatCurrency(order.deliveryCharge)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                {order.totalAmount}
+                {formatCurrency(order.totalAmount)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {order.paymentStatus}

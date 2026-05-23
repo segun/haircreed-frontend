@@ -1,7 +1,9 @@
 import React, { useMemo } from "react";
 import db from "../../instant";
+import { useCurrency } from "../../context/CurrencyContext";
 
 const CurrentStockLevelsReport: React.FC = () => {
+    const { formatCurrency } = useCurrency();
     const { isLoading, error, data } = db.useQuery({
         InventoryItems: {
             $: {
@@ -76,7 +78,7 @@ const CurrentStockLevelsReport: React.FC = () => {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {item.costPrice ? `$${item.costPrice.toFixed(2)}` : "N/A"}
+                                    {item.costPrice ? formatCurrency(item.costPrice) : "N/A"}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {item.supplier?.name || "N/A"}

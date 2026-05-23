@@ -3,6 +3,7 @@ import type { InventoryItem, InventoryItemWithDetails, User, InventoryAudit } fr
 import ConfirmDialog from '../common/ConfirmDialog';
 import Modal from '../common/Modal';
 import db from '../../instant';
+import { useCurrency } from '../../context/CurrencyContext';
 
 type InventoryItemTableProps = {
     items: InventoryItemWithDetails[] | undefined;
@@ -12,6 +13,7 @@ type InventoryItemTableProps = {
 };
 
 const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, onDelete, user }) => {
+    const { currency, formatCurrency } = useCurrency();
     const [itemToDelete, setItemToDelete] = useState<InventoryItemWithDetails | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [debouncedQuery, setDebouncedQuery] = useState<string>('');
@@ -136,7 +138,7 @@ const InventoryItemTable: React.FC<InventoryItemTableProps> = ({ items, onEdit, 
                                     >
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">{highlightMatch(getInventoryItemName(item), debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(String(item.quantity), debouncedQuery)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.costPrice ? `$${item.costPrice.toFixed(2)}` : 'N/A', debouncedQuery)}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.costPrice ? formatCurrency(item.costPrice) : 'N/A', debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{highlightMatch(item.supplier?.name || 'N/A', debouncedQuery)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {(user.role === "SUPER_ADMIN" || user.role === "ADMIN") && (

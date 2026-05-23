@@ -36,6 +36,7 @@ export type Settings = {
     vatRate: number;
     businessName?: string;
     businessLogo?: string;
+    currency?: string;
 }
 
 export type Wigger = InstaQLEntity<Schema, 'Wigger'>;

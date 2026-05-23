@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AdminLayout from '../components/layouts/AdminLayout';
 import { getDashboardDetails } from '../api/dashboard';
 import type { DashboardDetails, User } from "../types";
+import { useCurrency } from '../context/CurrencyContext';
 import SalesOverTimeChart from '../components/charts/SalesOverTimeChart';
 import PaymentStatusBreakdownChart from '../components/charts/PaymentStatusBreakdownChart';
 import DiscountVsFullPriceChart from '../components/charts/DiscountVsFullPriceChart';
@@ -24,6 +25,7 @@ type DashboardPageProps = {
 };
 
 export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
+    const { currency, formatCurrency } = useCurrency();
     const [dashboardDetails, setDashboardDetails] = useState<DashboardDetails | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -53,7 +55,7 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
         ) : dashboardDetails && (
             <>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard title="Total Sales" value={`${dashboardDetails.totalSales.toFixed(2)}`} change={`${dashboardDetails.salesPercentageChange}% from last month`} />
+                    <StatCard title="Total Sales" value={formatCurrency(dashboardDetails.totalSales)} change={`${dashboardDetails.salesPercentageChange}% from last month`} />
                     <StatCard title="New Orders" value={dashboardDetails.newOrders.toString()} change={`${dashboardDetails.newOrdersChange} from yesterday`} />
                     <StatCard title="Pending Payments" value={dashboardDetails.pendingPayments.toString()} />
                     <StatCard title="Inventory Items" value={dashboardDetails.inventoryItems.toString()} />
@@ -81,7 +83,7 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
                                         <p className="text-sm text-zinc-500">{new Date(activity.createdAt).toLocaleDateString()}</p>
                                     </div>
                                     <p>Order #{activity.orderNumber} - {activity.orderStatus}</p>
-                                    <p>Total: ${activity.totalAmount.toFixed(2)}</p>
+                                    <p>Total: {formatCurrency(activity.totalAmount)}</p>
                                 </li>
                             ))}
                         </ul>

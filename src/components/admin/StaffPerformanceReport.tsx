@@ -1,8 +1,10 @@
 
 import React, { useMemo } from 'react';
 import db from '../../instant';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const StaffPerformanceReport: React.FC = () => {
+  const { currency, formatCurrency } = useCurrency();
   const { isLoading, error, data } = db.useQuery({
     Users: {
       createdOrders: {},
@@ -76,10 +78,10 @@ const StaffPerformanceReport: React.FC = () => {
                 <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.totalOrders}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {`$${user.totalSales.toFixed(2)}`}
+                  {formatCurrency(user.totalSales)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {`$${user.averageOrderValue.toFixed(2)}`}
+                  {formatCurrency(user.averageOrderValue)}
                 </td>
               </tr>
             ))}

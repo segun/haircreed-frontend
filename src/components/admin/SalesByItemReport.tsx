@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import db from '../../instant';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const SalesByItemReport: React.FC = () => {
+  const { formatCurrency } = useCurrency();
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
@@ -105,7 +107,7 @@ const SalesByItemReport: React.FC = () => {
             <tr key={id}>
               <td className="px-6 py-4 whitespace-nowrap">{itemData.name}</td>
               <td className="px-6 py-4 whitespace-nowrap">{itemData.quantity}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{itemData.revenue.toFixed(2)}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(itemData.revenue)}</td>
             </tr>
           ))}
         </tbody>
