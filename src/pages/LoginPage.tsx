@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import type { User } from "../types";
-import { login } from "../api/auth";
+import { login, type LoginResult } from "../api/auth";
 import { PasswordInput } from "../components/common/PasswordInput";
 
 // Define the props for the LoginPage, including the callback
 type LoginPageProps = {
-  onLoginSuccess: (user: User) => void;
+    onLoginSuccess: (result: LoginResult) => void;
 };
 
 
@@ -75,9 +74,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
         try {
             const data = await login(username, password);
-
-            console.log("Login successful!", data);
-            
             onLoginSuccess(data);
 
         } catch (err) {

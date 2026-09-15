@@ -44,6 +44,28 @@ export const _schema = i.schema({
       statusHistory: i.json(),
       notes: i.string().optional(),
     }),
+    Receipts: i.entity({
+      receiptNumber: i.number().unique().indexed(),
+      orderId: i.string().unique().indexed(),
+      customerId: i.string().indexed(),
+      customerName: i.string().indexed(),
+      customerEmail: i.string().indexed(),
+      customerPhone: i.string().indexed(),
+      receiptDate: i.number().indexed(),
+      status: i.string().indexed(),
+      businessName: i.string(),
+      businessAddress: i.string(),
+      currency: i.string(),
+      lineItems: i.json(),
+      totalAmount: i.number(),
+      createdByUserId: i.string(),
+      updatedByUserId: i.string(),
+      createdAt: i.number().indexed(),
+      updatedAt: i.number().indexed(),
+      sentAt: i.number().indexed().optional(),
+      resentAt: i.number().indexed().optional(),
+      sendCount: i.number(),
+    }),
     Customers: i.entity({
       fullName: i.string().indexed(),
       email: i.string().unique(),
@@ -120,6 +142,14 @@ export const _schema = i.schema({
     CustomerOrder: {
       forward: { on: "Orders", has: "one", label: "customer" },
       reverse: { on: "Customers", has: "many", label: "orders" },
+    },
+    OrderReceipt: {
+      forward: { on: "Receipts", has: "one", label: "order" },
+      reverse: { on: "Orders", has: "one", label: "receipt" },
+    },
+    CustomerReceipt: {
+      forward: { on: "Receipts", has: "one", label: "customer" },
+      reverse: { on: "Customers", has: "many", label: "receipts" },
     },
     UserOrder: {
       forward: { on: "Orders", has: "one", label: "posOperator" },

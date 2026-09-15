@@ -17,19 +17,24 @@ import UserSettingsPage from './pages/UserSettingsPage';
 import CustomersPage from './pages/CustomersPage';
 import ProductsPage from './pages/ProductsPage';
 import AuditsPage from './pages/AuditsPage';
+import ReceiptsPage from './pages/ReceiptsPage';
+import ReceiptEditorPage from './pages/ReceiptEditorPage';
+import type { LoginResult } from './api/auth';
+import { clearAuthSession, setAuthSession, subscribeToSessionInvalidation } from './api/authSession';
 
 function App() {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch (error) {
-      console.error("Failed to parse user from localStorage", error);
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    localStorage.removeItem('user');
+    return subscribeToSessionInvalidation(() => {
+      localStorage.removeItem('user');
+      setUser(null);
+      navigate('/');
+    });
+  }, [navigate]);
 
   useEffect(() => {
     if (user && user.requiresPasswordReset) {
@@ -49,7 +54,8 @@ function App() {
     }
   }, [user, location.pathname, navigate]);
 
-  const handleLoginSuccess = (userData: User) => {
+  const handleLoginSuccess = ({ user: userData, session }: LoginResult) => {
+    setAuthSession(session);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
@@ -67,12 +73,14 @@ function App() {
   };
 
   const handleLogout = () => {
+    clearAuthSession();
     localStorage.removeItem('user');
     setUser(null);
     navigate('/');
   };
 
   const handleUserUpdate = (updatedUser: User) => {
+    localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
   };
 
@@ -99,6 +107,8 @@ function App() {
       <Route path="/audits" element={<AuditsPage user={user} onLogout={handleLogout} />} />
       <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
       <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
+      <Route path="/receipts" element={<ReceiptsPage user={user} onLogout={handleLogout} />} />
+      <Route path="/receipts/:receiptId" element={<ReceiptEditorPage user={user} onLogout={handleLogout} />} />
       <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />
       <Route path="/settings" element={<AppSettingsPage user={user} onLogout={handleLogout}/>} />
       <Route path="/user-settings" element={<UserSettingsPage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />} />

@@ -13,6 +13,7 @@ import {
   UserCircle,
   ChevronDown,
   ChevronUp,
+  ReceiptText,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import type { User } from "../../types";
@@ -123,6 +124,9 @@ export default function AdminLayout({
     { name: "Products", path: "/products", icon: <Package size={20} /> },
     { name: "Point of Sale", path: "/orders", icon: <ShoppingCart size={20} /> },
     { name: "View Orders", path: "/view-orders", icon: <ShoppingCart size={20} /> },
+    ...(user?.role === "SUPER_ADMIN"
+      ? [{ name: "Receipts", path: "/receipts", icon: <ReceiptText size={20} /> }]
+      : []),
     { name: "Reports", path: "/reports", icon: <BarChart2 size={20} /> },
     {
       name: "Attributes",

@@ -35,6 +35,7 @@ export type AppSettings = {
 export type Settings = {
     vatRate: number;
     businessName?: string;
+  businessAddress?: string;
     businessLogo?: string;
     currency?: string;
 }
@@ -46,11 +47,45 @@ export type Order = InstaQLEntity<Schema, 'Orders'> & {
     posOperator: User;
     wigger?: Wigger;
     customerId?: string;
+  receipt?: Receipt;
 };
 export type CustomerAddress = InstaQLEntity<Schema, 'CustomerAddress'>;
 export type Customer = InstaQLEntity<Schema, 'Customers'> & {
     orders: Order[];
     addresses: CustomerAddress[];
+  receipts?: Receipt[];
+};
+
+export type ReceiptStatus = 'DRAFT' | 'SENT';
+
+export type ReceiptLineItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  amount: number;
+  discount: number;
+};
+
+export type Receipt = InstaQLEntity<Schema, 'Receipts'> & {
+  status: ReceiptStatus;
+  lineItems: ReceiptLineItem[];
+  order?: Order;
+  customer?: Customer;
+};
+
+export type ReceiptDraftRequest = {
+  orderId: string;
+  userId: string;
+};
+
+export type SendReceiptRequest = {
+  userId: string;
+  receiptDate: number;
+  businessName: string;
+  businessAddress: string;
+  customerId: string;
+  currency: string;
+  lineItems: ReceiptLineItem[];
 };
 
 export type Page =
