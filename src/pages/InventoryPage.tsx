@@ -57,9 +57,9 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
         setWriteError(null);
         try {
             if (payload.id) {
-                await updateInventoryItem(payload.id, payload);
+                await updateInventoryItem(payload.id, payload, user.id);
             } else {
-                await createInventoryItem(payload);
+                await createInventoryItem(payload, user.id);
             }
             inventoryQuery.refetch();
             setIsFormOpen(false);
@@ -102,7 +102,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
         setIsSubmitting(true);
         setWriteError(null);
         try {
-            await deleteInventoryItem(itemId);
+            await deleteInventoryItem(itemId, user.id);
             inventoryQuery.refetch();
         } catch (err) {
             setWriteError((err as Error).message);

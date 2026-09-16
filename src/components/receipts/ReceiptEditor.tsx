@@ -8,12 +8,21 @@ import type {
 } from "../../types";
 import { useCurrency } from "../../context/CurrencyContext";
 
-const createBlankLine = (): ReceiptLineItem => ({
+type DiscountMode = "amount" | "percentage";
+
+type EditableReceiptLineItem = ReceiptLineItem & {
+  discountMode: DiscountMode;
+  discountValue: number;
+};
+
+const createBlankLine = (): EditableReceiptLineItem => ({
   id: crypto.randomUUID(),
   description: "",
   quantity: 1,
   amount: 0,
   discount: 0,
+  discountMode: "amount",
+  discountValue: 0,
 });
 
 const toDateInputValue = (timestamp: number) => {
@@ -54,7 +63,7 @@ export default function ReceiptEditor({
   const [businessAddress, setBusinessAddress] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [receiptDate, setReceiptDate] = useState("");
-  const [lineItems, setLineItems] = useState<ReceiptLineItem[]>([
+  const [lineItems, setLineItems] = useState<EditableReceiptLineItem[]>([
     createBlankLine(),
   ]);
   const [isEditingFrom, setIsEditingFrom] = useState(false);
@@ -86,7 +95,15 @@ export default function ReceiptEditor({
           : Date.now(),
       ),
     );
-    setLineItems(savedItems.length > 0 ? savedItems : [createBlankLine()]);
+    setLineItems(
+      savedItems.length > 0
+        ? savedItems.map((item) => ({
+            ...item,
+            discountMode: "amount",
+            discountValue: item.discount,
+          }))
+        : [createBlankLine()],
+    );
     setErrors({});
   }, [receipt, defaultBusinessName, defaultBusinessAddress]);
 
@@ -94,14 +111,22 @@ export default function ReceiptEditor({
     (customer) => customer.id === customerId,
   );
 
-  const rowTotal = (item: ReceiptLineItem) =>
-    item.quantity * item.amount - item.discount;
+  const discountAmount = (item: EditableReceiptLineItem) => {
+    if (item.discountMode === "percentage") {
+      return item.quantity * item.amount * (item.discountValue / 100);
+    }
+
+    return item.discountValue;
+  };
+
+  const rowTotal = (item: EditableReceiptLineItem) =>
+    item.quantity * item.amount - discountAmount(item);
 
   const total = lineItems.reduce((sum, item) => sum + rowTotal(item), 0);
 
   const updateLine = (
     lineId: string,
-    field: keyof Omit<ReceiptLineItem, "id">,
+    field: "description" | "quantity" | "amount",
     value: string,
   ) => {
     setLineItems((current) =>
@@ -111,6 +136,22 @@ export default function ReceiptEditor({
           ...item,
           [field]: field === "description" ? value : Number(value),
         };
+      }),
+    );
+  };
+
+  const updateDiscount = (
+    lineId: string,
+    field: "discountMode" | "discountValue",
+    value: string,
+  ) => {
+    setLineItems((current) =>
+      current.map((item) => {
+        if (item.id !== lineId) return item;
+        return {
+          ...item,
+          [field]: field === "discountMode" ? value : Number(value),
+        } as EditableReceiptLineItem;
       }),
     );
   };
@@ -154,9 +195,12 @@ export default function ReceiptEditor({
       if (!Number.isFinite(item.amount) || item.amount < 0) {
         nextErrors[`${prefix}-amount`] = `Line ${index + 1}: amount cannot be negative.`;
       }
-      if (!Number.isFinite(item.discount) || item.discount < 0) {
+      const calculatedDiscount = discountAmount(item);
+      if (!Number.isFinite(item.discountValue) || item.discountValue < 0) {
         nextErrors[`${prefix}-discount`] = `Line ${index + 1}: discount cannot be negative.`;
-      } else if (item.discount > item.quantity * item.amount) {
+      } else if (item.discountMode === "percentage" && item.discountValue > 100) {
+        nextErrors[`${prefix}-discount`] = `Line ${index + 1}: discount percentage cannot exceed 100%.`;
+      } else if (calculatedDiscount > item.quantity * item.amount) {
         nextErrors[`${prefix}-discount`] = `Line ${index + 1}: discount cannot exceed its gross amount.`;
       }
     });
@@ -181,7 +225,16 @@ export default function ReceiptEditor({
         businessAddress: businessAddress.trim(),
         customerId,
         currency,
-        lineItems,
+        lineItems: lineItems.map(
+          ({ discountMode: _discountMode, discountValue: _discountValue, ...item }) => ({
+            ...item,
+            discount: discountAmount({
+              ...item,
+              discountMode: _discountMode,
+              discountValue: _discountValue,
+            }),
+          }),
+        ),
       });
     } catch {
       return;
@@ -222,21 +275,16 @@ export default function ReceiptEditor({
 
   const inputClass =
     "mt-1 block w-full border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-700";
+  const groupedInputClass =
+    "min-w-0 flex-1 bg-white px-3 py-2 text-sm text-zinc-900 focus:outline-none";
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto max-w-6xl">
       <div className="border border-zinc-300 bg-white shadow-sm">
         <div className="grid gap-8 border-b border-zinc-200 p-5 sm:p-8 lg:grid-cols-[1fr_280px]">
           <section>
-            <div className="mb-2 flex items-start justify-between gap-4">
+            <div className="mb-2">
               <p className="text-xs font-semibold uppercase text-zinc-500">From</p>
-              <button
-                type="button"
-                onClick={openFromEditor}
-                className="text-sm font-medium text-blue-700 hover:text-blue-900"
-              >
-                Edit From
-              </button>
             </div>
             <p className="text-lg font-semibold text-zinc-900">
               {businessName || "Business name not set"}
@@ -244,6 +292,13 @@ export default function ReceiptEditor({
             <p className="mt-1 max-w-xl whitespace-pre-line text-sm text-zinc-600">
               {businessAddress || "Business address not set"}
             </p>
+            <button
+              type="button"
+              onClick={openFromEditor}
+              className="mt-3 text-sm font-medium text-blue-700 hover:text-blue-900"
+            >
+              Edit From
+            </button>
             {(errors.businessName || errors.businessAddress) && (
               <p className="mt-2 text-sm text-red-600">
                 {errors.businessName || errors.businessAddress}
@@ -376,8 +431,8 @@ export default function ReceiptEditor({
                     <label className="text-xs font-semibold uppercase text-zinc-500 md:hidden">
                       Amount
                     </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-3 text-sm text-zinc-500">
+                    <div className="mt-1 flex overflow-hidden border border-zinc-300 bg-white focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700">
+                      <span className="flex items-center border-r border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-500">
                         {currency}
                       </span>
                       <input
@@ -389,7 +444,7 @@ export default function ReceiptEditor({
                         onChange={(event) =>
                           updateLine(item.id, "amount", event.target.value)
                         }
-                        className={`${inputClass} pl-8`}
+                        className={groupedInputClass}
                       />
                     </div>
                     {errors[`${prefix}-amount`] && (
@@ -402,20 +457,29 @@ export default function ReceiptEditor({
                     <label className="text-xs font-semibold uppercase text-zinc-500 md:hidden">
                       Discount
                     </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-3 text-sm text-zinc-500">
-                        {currency}
-                      </span>
+                    <div className="mt-1 flex overflow-hidden border border-zinc-300 bg-white focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700">
+                      <select
+                        aria-label={`Line ${index + 1} discount type`}
+                        value={item.discountMode}
+                        onChange={(event) =>
+                          updateDiscount(item.id, "discountMode", event.target.value)
+                        }
+                        className="border-r border-zinc-200 bg-zinc-50 px-2 text-sm text-zinc-600 focus:outline-none"
+                      >
+                        <option value="amount">{currency}</option>
+                        <option value="percentage">%</option>
+                      </select>
                       <input
                         aria-label={`Line ${index + 1} discount`}
                         type="number"
                         min="0"
+                        max={item.discountMode === "percentage" ? "100" : undefined}
                         step="0.01"
-                        value={item.discount}
+                        value={item.discountValue}
                         onChange={(event) =>
-                          updateLine(item.id, "discount", event.target.value)
+                          updateDiscount(item.id, "discountValue", event.target.value)
                         }
-                        className={`${inputClass} pl-8`}
+                        className={groupedInputClass}
                       />
                     </div>
                     {errors[`${prefix}-discount`] && (

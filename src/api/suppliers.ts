@@ -1,11 +1,12 @@
 import type { Supplier } from "../types";
+import { authorizedFetch } from "./client";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_SUPPLIERS_ENDPOINT}`
 
 export type SupplierPayload = Omit<Supplier, 'id' | 'createdAt'>;
 
 export const createSupplier = async (supplier: SupplierPayload): Promise<Supplier> => {
-    const response = await fetch(BASE_URL, {
+    const response = await authorizedFetch(BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(supplier),

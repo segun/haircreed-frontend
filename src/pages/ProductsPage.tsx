@@ -88,13 +88,13 @@ const ProductsPage: React.FC<PageProps> = ({ user, onLogout }) => {
     setIsSubmitting(true);
     try {
       if (formMode === 'add') {
-        await createProduct({ name: data.name!, quantity: data.quantity });
+        await createProduct({ name: data.name!, quantity: data.quantity }, user.id);
         toast.success('Product added successfully');
       } else if (formMode === 'edit' && editingItem) {
-        await updateProduct(editingItem.id, { name: data.name! });
+        await updateProduct(editingItem.id, { name: data.name! }, user.id);
         toast.success('Product updated successfully');
       } else if (formMode === 'add-stock' && editingItem) {
-        await addStock(editingItem.id, { quantity: data.quantity });
+        await addStock(editingItem.id, { quantity: data.quantity }, user.id);
         toast.success('Stock added successfully');
       }
       await fetchProducts();
@@ -178,6 +178,7 @@ const ProductsPage: React.FC<PageProps> = ({ user, onLogout }) => {
         <UseProductModal
           isOpen={isUseProductOpen}
           product={selectedProductForUse}
+          userId={user.id}
           onSubmit={handleUseProductSubmit}
           onClose={() => {
             setIsUseProductOpen(false);

@@ -32,20 +32,30 @@ export const apiUrl = (path: string, query?: Record<string, unknown>) => {
   return url.toString();
 };
 
+export const authorizedFetch = async (
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+) => {
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${getAuthToken()}`);
+
+  const response = await fetch(input, { ...init, headers });
+  if (response.status === 401) invalidateAuthSession();
+
+  return response;
+};
+
 export const authorizedGet = async <T>(
   path: string,
   query?: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<T> => {
-  const response = await fetch(apiUrl(path, query), {
+  const response = await authorizedFetch(apiUrl(path, query), {
     signal,
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${getAuthToken()}`,
     },
   });
-
-  if (response.status === 401) invalidateAuthSession();
 
   if (!response.ok) {
     const error = await response.json().catch(() => null);

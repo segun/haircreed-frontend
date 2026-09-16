@@ -1,4 +1,5 @@
 import type { Order } from '../types';
+import { authorizedFetch } from './client';
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_ORDERS_ENDPOINT}`
 
@@ -18,7 +19,7 @@ type OrderPayload = {
 };
 
 export const createOrder = async (order: OrderPayload): Promise<Order> => {
-    const response = await fetch(BASE_URL, {
+    const response = await authorizedFetch(BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order),
@@ -40,7 +41,7 @@ export const updateOrder = async (orderId: string, userId: string, updates: Part
         ...(customerChanged && { customerChanged }),
     };
 
-    const response = await fetch(`${BASE_URL}/${orderId}`, {
+    const response = await authorizedFetch(`${BASE_URL}/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -53,7 +54,7 @@ export const updateOrder = async (orderId: string, userId: string, updates: Part
 }
 
 export const deleteOrder = async (orderId: string): Promise<void> => {
-    const response = await fetch(`${BASE_URL}/${orderId}`, {
+    const response = await authorizedFetch(`${BASE_URL}/${orderId}`, {
         method: 'DELETE',
     });
     if (!response.ok) {

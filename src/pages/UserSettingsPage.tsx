@@ -104,8 +104,6 @@ const UserSettingsPage: React.FC<UserSettingsPageProps> = ({
                 formData.currentPassword
             );
 
-            // Update local storage and parent component
-            localStorage.setItem('user', JSON.stringify(updatedUser));
             onUserUpdate?.(updatedUser);
 
             // Clear form

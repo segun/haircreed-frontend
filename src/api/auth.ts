@@ -1,16 +1,16 @@
 import type { User } from "../types";
-import type { AuthSession } from "./authSession";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_AUTH_ENDPOINT}`
 
 export type LoginResult = {
   user: User;
-  session: AuthSession;
+  accessToken: string;
+  expiresIn: number;
 };
 
-type LoginApiResponse = Partial<User> & {
-  user?: User;
-  session: AuthSession;
+type LoginApiResponse = User & {
+  accessToken: string;
+  expiresIn: number;
 };
 
 export const login = async (username: string, password: string): Promise<LoginResult> => {
@@ -27,12 +27,12 @@ export const login = async (username: string, password: string): Promise<LoginRe
     throw new Error(errorData.message || `Error: ${response.statusText}`);
   }
 
-  const data: LoginApiResponse = await response.json();
-  const user = data.user ?? (data as User);
+  const data = await response.json() as LoginApiResponse;
 
-  if (!user.id || !data.session?.token || !data.session.expiresAt) {
-    throw new Error("Login response did not include a valid user session.");
+  if (!data.id || !data.accessToken || !Number.isFinite(data.expiresIn) || data.expiresIn <= 0) {
+    throw new Error("Login response did not include valid credentials.");
   }
 
-  return { user, session: data.session };
+  const { accessToken, expiresIn, ...user } = data;
+  return { user, accessToken, expiresIn };
 };

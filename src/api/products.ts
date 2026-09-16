@@ -1,19 +1,7 @@
 import type { Product, ProductStockAudit, ProductUsageAudit } from "../types";
-import { authorizedGet, type DataResponse, type PaginatedResponse } from "./client";
+import { authorizedFetch, authorizedGet, type DataResponse, type PaginatedResponse } from "./client";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_PRODUCTS_ENDPOINT}`;
-
-const getLoggedInUserId = (): string => {
-  const stored = localStorage.getItem('user');
-  if (!stored) throw new Error('No logged-in user found');
-  try {
-    const parsed = JSON.parse(stored);
-    if (!parsed?.id) throw new Error('No user id in stored user');
-    return parsed.id;
-  } catch {
-    throw new Error('Failed to parse logged-in user from localStorage');
-  }
-};
 
 // Fetch all products
 export const listProducts = async (): Promise<Product[]> => {
@@ -33,14 +21,14 @@ export const getProduct = async (id: string): Promise<Product> => {
 };
 
 // Add a new product
-export const createProduct = async (payload: { name: string; quantity: number }): Promise<Product> => {
-  const response = await fetch(BASE_URL, {
+export const createProduct = async (payload: { name: string; quantity: number }, userId: string): Promise<Product> => {
+  const response = await authorizedFetch(BASE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: payload.name,
       quantity: payload.quantity,
-      userId: getLoggedInUserId(),
+      userId,
       origin: 'WEB',
     }),
   });
@@ -49,13 +37,13 @@ export const createProduct = async (payload: { name: string; quantity: number })
 };
 
 // Add stock to an existing product
-export const addStock = async (id: string, payload: { quantity: number }): Promise<Product> => {
-  const response = await fetch(`${BASE_URL}/${id}/add-stock`, {
+export const addStock = async (id: string, payload: { quantity: number }, userId: string): Promise<Product> => {
+  const response = await authorizedFetch(`${BASE_URL}/${id}/add-stock`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       quantity: payload.quantity,
-      userId: getLoggedInUserId(),
+      userId,
       origin: 'WEB',
     }),
   });
@@ -68,11 +56,12 @@ export const useProduct = async (payload: {
   productId: string;
   orderId?: string;
   quantity: number;
+  userId: string;
 }): Promise<Product> => {
   const requestBody: Record<string, string | number> = {
     productId: payload.productId,
     quantity: payload.quantity,
-    userId: getLoggedInUserId(),
+    userId: payload.userId,
     origin: 'WEB',
   };
 
@@ -80,7 +69,7 @@ export const useProduct = async (payload: {
     requestBody.orderId = payload.orderId;
   }
 
-  const response = await fetch(`${BASE_URL}/use`, {
+  const response = await authorizedFetch(`${BASE_URL}/use`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(requestBody),
@@ -99,13 +88,13 @@ export const useProduct = async (payload: {
 };
 
 // Update product name
-export const updateProduct = async (id: string, payload: { name: string }): Promise<Product> => {
-  const response = await fetch(`${BASE_URL}/${id}`, {
+export const updateProduct = async (id: string, payload: { name: string }, userId: string): Promise<Product> => {
+  const response = await authorizedFetch(`${BASE_URL}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: payload.name,
-      userId: getLoggedInUserId(),
+      userId,
       origin: 'WEB',
     }),
   });
@@ -115,7 +104,7 @@ export const updateProduct = async (id: string, payload: { name: string }): Prom
 
 // Delete product
 export const deleteProduct = async (id: string): Promise<void> => {
-  const response = await fetch(`${BASE_URL}/${id}`, {
+  const response = await authorizedFetch(`${BASE_URL}/${id}`, {
     method: 'DELETE',
   });
   if (!response.ok) {

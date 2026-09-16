@@ -663,6 +663,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
         <UseProductModal
           isOpen={isUseProductOpen}
           product={selectedProductForUse}
+           userId={user.id}
           onSubmit={handleUseProductSubmit}
           onClose={() => {
             setIsUseProductOpen(false);

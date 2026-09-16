@@ -31,7 +31,6 @@ function App() {
   useEffect(() => {
     localStorage.removeItem('user');
     return subscribeToSessionInvalidation(() => {
-      localStorage.removeItem('user');
       setUser(null);
       navigate('/');
     });
@@ -55,9 +54,8 @@ function App() {
     }
   }, [user, location.pathname, navigate]);
 
-  const handleLoginSuccess = ({ user: userData, session }: LoginResult) => {
-    setAuthSession(session);
-    localStorage.setItem('user', JSON.stringify(userData));
+  const handleLoginSuccess = ({ user: userData, accessToken, expiresIn }: LoginResult) => {
+    setAuthSession(accessToken, expiresIn);
     setUser(userData);
   };
 
@@ -67,7 +65,6 @@ function App() {
         passwordHash: newPassword,
         requiresPasswordReset: false,
       });
-      localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       navigate('/dashboard');
     }
@@ -75,13 +72,11 @@ function App() {
 
   const handleLogout = () => {
     clearAuthSession();
-    localStorage.removeItem('user');
     setUser(null);
     navigate('/');
   };
 
   const handleUserUpdate = (updatedUser: User) => {
-    localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
   };
 

@@ -10,6 +10,7 @@ import { useApiQuery } from '../../hooks/useApiQuery';
 type UseProductModalProps = {
   isOpen: boolean;
   product: Product;
+  userId: string;
   onSubmit: () => void;
   onClose: () => void;
 };
@@ -17,6 +18,7 @@ type UseProductModalProps = {
 export const UseProductModal: React.FC<UseProductModalProps> = ({
   isOpen,
   product,
+  userId,
   onSubmit,
   onClose,
 }) => {
@@ -72,6 +74,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
         productId: product.id,
         orderId: selectedOrder?.id,
         quantity: formData.quantity,
+        userId,
       });
       toast.success(
         selectedOrder

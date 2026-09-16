@@ -1,5 +1,5 @@
 import type { Receipt, ReceiptDraftRequest, SendReceiptRequest } from "../types";
-import { getAuthToken, invalidateAuthSession } from "./authSession";
+import { authorizedFetch } from "./client";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_RECEIPTS_ENDPOINT}`;
 
@@ -8,29 +8,16 @@ const getErrorMessage = async (response: Response, fallback: string) => {
   return error?.message || fallback;
 };
 
-const getAuthorizedHeaders = (idempotencyKey?: string) => ({
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getAuthToken()}`,
-  ...(idempotencyKey && { "Idempotency-Key": idempotencyKey }),
-});
-
-const handleUnauthorized = (response: Response) => {
-  if (response.status === 401) {
-    invalidateAuthSession();
-  }
-};
-
 export const getOrCreateReceiptDraft = async (
   request: ReceiptDraftRequest,
 ): Promise<Receipt> => {
-  const response = await fetch(`${BASE_URL}/drafts`, {
+  const response = await authorizedFetch(`${BASE_URL}/drafts`, {
     method: "POST",
-    headers: getAuthorizedHeaders(),
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
   });
 
   if (!response.ok) {
-    handleUnauthorized(response);
     throw new Error(
       await getErrorMessage(response, "Failed to prepare receipt"),
     );
@@ -56,14 +43,16 @@ export const sendReceipt = async (
   receiptNumber: number,
   request: SendReceiptRequest,
 ) => {
-  const response = await fetch(`${BASE_URL}/${receiptId}/send`, {
+  const response = await authorizedFetch(`${BASE_URL}/${receiptId}/send`, {
     method: "POST",
-    headers: getAuthorizedHeaders(crypto.randomUUID()),
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": crypto.randomUUID(),
+    },
     body: JSON.stringify(request),
   });
 
   if (!response.ok) {
-    handleUnauthorized(response);
     throw new Error(await getErrorMessage(response, "Failed to send receipt"));
   }
 

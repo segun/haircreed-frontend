@@ -1,28 +1,14 @@
 export type AuthSession = {
-  token: string;
-  expiresAt: number | string;
+  accessToken: string;
+  expiresAt: number;
 };
 
 type SessionInvalidationListener = () => void;
 
 let currentSession: AuthSession | null = null;
 let expirationTimer: number | null = null;
+let invalidationHandled = false;
 const invalidationListeners = new Set<SessionInvalidationListener>();
-
-const getExpirationTime = (expiresAt: AuthSession["expiresAt"]) => {
-  if (typeof expiresAt === "number") {
-    return expiresAt < 1_000_000_000_000 ? expiresAt * 1000 : expiresAt;
-  }
-
-  const numericValue = Number(expiresAt);
-  if (Number.isFinite(numericValue)) {
-    return numericValue < 1_000_000_000_000
-      ? numericValue * 1000
-      : numericValue;
-  }
-
-  return Date.parse(expiresAt);
-};
 
 const clearExpirationTimer = () => {
   if (expirationTimer !== null) {
@@ -38,10 +24,13 @@ const notifySessionInvalidated = () => {
 export const clearAuthSession = () => {
   clearExpirationTimer();
   currentSession = null;
+  invalidationHandled = false;
 };
 
 export const invalidateAuthSession = () => {
+  if (invalidationHandled) return;
   clearAuthSession();
+  invalidationHandled = true;
   notifySessionInvalidated();
 };
 
@@ -49,10 +38,9 @@ const scheduleExpiration = () => {
   clearExpirationTimer();
   if (!currentSession) return;
 
-  const expirationTime = getExpirationTime(currentSession.expiresAt);
-  const remainingTime = expirationTime - Date.now();
+  const remainingTime = currentSession.expiresAt - Date.now();
 
-  if (!Number.isFinite(expirationTime) || remainingTime <= 0) {
+  if (remainingTime <= 0) {
     invalidateAuthSession();
     return;
   }
@@ -63,18 +51,16 @@ const scheduleExpiration = () => {
   );
 };
 
-export const setAuthSession = (session: AuthSession) => {
-  if (!session.token || !session.expiresAt) {
-    throw new Error("Login response did not include a valid session.");
+export const setAuthSession = (accessToken: string, expiresIn: number) => {
+  if (!accessToken || !Number.isFinite(expiresIn) || expiresIn <= 0) {
+    throw new Error("Login response did not include valid credentials.");
   }
 
-  const expirationTime = getExpirationTime(session.expiresAt);
-  if (!Number.isFinite(expirationTime) || expirationTime <= Date.now()) {
-    clearAuthSession();
-    throw new Error("The login session has already expired. Please sign in again.");
-  }
-
-  currentSession = session;
+  invalidationHandled = false;
+  currentSession = {
+    accessToken,
+    expiresAt: Date.now() + expiresIn * 1000,
+  };
   scheduleExpiration();
 };
 
@@ -84,13 +70,12 @@ export const getAuthToken = () => {
     throw new Error("Your session has expired. Please sign in again.");
   }
 
-  const expirationTime = getExpirationTime(currentSession.expiresAt);
-  if (!Number.isFinite(expirationTime) || Date.now() >= expirationTime) {
+  if (Date.now() >= currentSession.expiresAt) {
     invalidateAuthSession();
     throw new Error("Your session has expired. Please sign in again.");
   }
 
-  return currentSession.token;
+  return currentSession.accessToken;
 };
 
 export const subscribeToSessionInvalidation = (

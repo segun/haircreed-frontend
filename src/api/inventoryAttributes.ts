@@ -1,4 +1,5 @@
 import type { AttributeCategory, AttributeItem } from "../types";
+import { authorizedFetch } from "./client";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_INVENTORY_ATTRIBUTES_ENDPOINT}`
 
@@ -7,7 +8,7 @@ const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API
 // ---
 
 export const createCategory = async (title: string): Promise<AttributeCategory> => {
-  const response = await fetch(`${BASE_URL}/categories`, {
+  const response = await authorizedFetch(`${BASE_URL}/categories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
@@ -17,7 +18,7 @@ export const createCategory = async (title: string): Promise<AttributeCategory> 
 };
 
 export const updateCategory = async (categoryId: string, title: string): Promise<AttributeCategory> => {
-  const response = await fetch(`${BASE_URL}/categories/${categoryId}`, {
+  const response = await authorizedFetch(`${BASE_URL}/categories/${categoryId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title }),
@@ -27,7 +28,7 @@ export const updateCategory = async (categoryId: string, title: string): Promise
 };
 
 export const deleteCategory = async (categoryId: string): Promise<void> => {
-  const response = await fetch(`${BASE_URL}/categories/${categoryId}`, {
+  const response = await authorizedFetch(`${BASE_URL}/categories/${categoryId}`, {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Failed to delete category');
@@ -38,7 +39,7 @@ export const deleteCategory = async (categoryId: string): Promise<void> => {
 // ---
 
 export const createItem = async (categoryId: string, name: string): Promise<AttributeItem> => {
-  const response = await fetch(`${BASE_URL}/categories/${categoryId}/items`, {
+  const response = await authorizedFetch(`${BASE_URL}/categories/${categoryId}/items`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -48,7 +49,7 @@ export const createItem = async (categoryId: string, name: string): Promise<Attr
 };
 
 export const updateItem = async (itemId: string, name: string): Promise<AttributeItem> => {
-  const response = await fetch(`${BASE_URL}/items/${itemId}`, {
+  const response = await authorizedFetch(`${BASE_URL}/items/${itemId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -58,7 +59,7 @@ export const updateItem = async (itemId: string, name: string): Promise<Attribut
 };
 
 export const deleteItem = async (itemId: string): Promise<void> => {
-  const response = await fetch(`${BASE_URL}/items/${itemId}`, {
+  const response = await authorizedFetch(`${BASE_URL}/items/${itemId}`, {
     method: 'DELETE',
   });
   if (!response.ok) throw new Error('Failed to delete item');
