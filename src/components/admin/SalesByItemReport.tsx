@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import db from '../../instant';
+import { getSalesByItem } from '../../api/databaseReads';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useApiQuery } from '../../hooks/useApiQuery';
 
 const SalesByItemReport: React.FC = () => {
   const { formatCurrency } = useCurrency();
@@ -18,48 +19,14 @@ const SalesByItemReport: React.FC = () => {
     return new Date().getTime();
   }, []);
 
-  const { isLoading, error, data } = db.useQuery({
-    Orders: {
-      $: {
-        where: {
-          createdAt: {
-            $gte: startDate ? new Date(startDate).getTime() : defaultStartDate,
-            $lte: endDate ? new Date(endDate).getTime() : defaultEndDate,
-          },
-        },
-      },
-    },
-  });
+  const from = startDate ? new Date(startDate).getTime() : defaultStartDate;
+  const to = endDate ? new Date(endDate).getTime() : defaultEndDate;
+  const { isLoading, error, data } = useApiQuery(
+    `reports-sales-by-item-${from}-${to}`,
+    (signal) => getSalesByItem({ from, to }, signal),
+  );
 
-  const salesByItem = useMemo(() => {
-    const orders = data?.Orders || [];
-    if (!orders.length) {
-      return {};
-    }
-
-    const itemSales: Record<string, { name: string; quantity: number; revenue: number }> = {};
-
-    orders.forEach(order => {
-      (order.items as Array<{ id: string; name: string; quantity: number; price: number }>).forEach(item => {
-        if (itemSales[item.id]) {
-          itemSales[item.id].quantity += item.quantity;
-          itemSales[item.id].revenue += item.price * item.quantity;
-        } else {
-          itemSales[item.id] = {
-        name: item.name,
-        quantity: item.quantity,
-        revenue: item.price * item.quantity,
-          };
-        }
-      });
-    });
-
-    return itemSales;
-  }, [data?.Orders]);
-
-  const sortedSales = useMemo(() => {
-    return Object.entries(salesByItem).sort(([, a], [, b]) => b.quantity - a.quantity);
-  }, [salesByItem]);
+  const sortedSales = useMemo(() => data || [], [data]);
 
   return (
     <div>
@@ -103,8 +70,8 @@ const SalesByItemReport: React.FC = () => {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {sortedSales.map(([id, itemData]) => (
-            <tr key={id}>
+          {sortedSales.map((itemData) => (
+            <tr key={itemData.itemId}>
               <td className="px-6 py-4 whitespace-nowrap">{itemData.name}</td>
               <td className="px-6 py-4 whitespace-nowrap">{itemData.quantity}</td>
               <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(itemData.revenue)}</td>

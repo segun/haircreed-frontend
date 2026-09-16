@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../components/layouts/AdminLayout";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 import { useCurrency } from "../context/CurrencyContext";
-import db from "../instant";
+import { getReceipts } from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 import type { Receipt, User } from "../types";
 
 type ReceiptsPageProps = {
@@ -22,7 +23,6 @@ const dateInputToEnd = (value: string) =>
 export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
   const navigate = useNavigate();
   const { formatCurrency } = useCurrency();
-  const { data, isLoading, error } = db.useQuery({ Receipts: {} });
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({
     receiptDate: "",
@@ -32,65 +32,32 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
     receiptNumber: "",
   });
 
-  const filteredReceipts = useMemo(() => {
-    const customerQuery = filters.customer.trim().toLowerCase();
-    const receiptNumberQuery = filters.receiptNumber.trim().toLowerCase();
-
-    return ((data?.Receipts || []) as Receipt[])
-      .filter((receipt) => receipt.status === "SENT")
-      .filter((receipt) => {
-        if (filters.receiptDate) {
-          const start = dateInputToStart(filters.receiptDate);
-          const end = dateInputToEnd(filters.receiptDate);
-          if (receipt.receiptDate < start || receipt.receiptDate > end) return false;
-        }
-        if (
-          filters.dateStart &&
-          receipt.receiptDate < dateInputToStart(filters.dateStart)
-        ) {
-          return false;
-        }
-        if (
-          filters.dateEnd &&
-          receipt.receiptDate > dateInputToEnd(filters.dateEnd)
-        ) {
-          return false;
-        }
-        if (customerQuery) {
-          const customerFields = [
-            receipt.customerName,
-            receipt.customerEmail,
-            receipt.customerPhone,
-          ];
-          if (
-            !customerFields.some((value) =>
-              value.toLowerCase().includes(customerQuery),
-            )
-          ) {
-            return false;
-          }
-        }
-        if (
-          receiptNumberQuery &&
-          !String(receipt.receiptNumber)
-            .toLowerCase()
-            .includes(receiptNumberQuery)
-        ) {
-          return false;
-        }
-        return true;
-      })
-      .sort((a, b) => b.receiptDate - a.receiptDate);
-  }, [data?.Receipts, filters]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredReceipts.length / ITEMS_PER_PAGE),
+  const dateFromValues = [
+    filters.receiptDate ? dateInputToStart(filters.receiptDate) : undefined,
+    filters.dateStart ? dateInputToStart(filters.dateStart) : undefined,
+  ].filter((value): value is number => value !== undefined);
+  const dateToValues = [
+    filters.receiptDate ? dateInputToEnd(filters.receiptDate) : undefined,
+    filters.dateEnd ? dateInputToEnd(filters.dateEnd) : undefined,
+  ].filter((value): value is number => value !== undefined);
+  const receiptQuery = {
+    status: "SENT",
+    receiptNumber: filters.receiptNumber.trim(),
+    customer: filters.customer.trim(),
+    dateFrom: dateFromValues.length ? Math.max(...dateFromValues) : undefined,
+    dateTo: dateToValues.length ? Math.min(...dateToValues) : undefined,
+    page: currentPage,
+    pageSize: ITEMS_PER_PAGE,
+    sort: "receiptDate:desc",
+  };
+  const { data, isLoading, error } = useApiQuery(
+    `receipts:${JSON.stringify(receiptQuery)}`,
+    (signal) => getReceipts(receiptQuery, signal),
+    user.role === "SUPER_ADMIN",
   );
-  const pageReceipts = filteredReceipts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
+  const pageReceipts = (data?.data || []) as Receipt[];
+  const totalItems = data?.pagination.totalItems || 0;
+  const totalPages = Math.max(1, data?.pagination.totalPages || 1);
 
   const updateFilter = (name: keyof typeof filters, value: string) => {
     setFilters((current) => ({ ...current, [name]: value }));
@@ -284,7 +251,7 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
 
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-zinc-600">
-          {filteredReceipts.length} receipt{filteredReceipts.length === 1 ? "" : "s"}
+          {totalItems} receipt{totalItems === 1 ? "" : "s"}
         </p>
         <div className="flex items-center gap-3">
           <button

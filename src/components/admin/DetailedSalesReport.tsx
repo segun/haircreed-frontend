@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
-import db from "../../instant";
+import { getDetailedSales } from "../../api/databaseReads";
 import { useCurrency } from "../../context/CurrencyContext";
+import { useApiQuery } from "../../hooks/useApiQuery";
 
 const DetailedSalesReport: React.FC = () => {
   const { formatCurrency } = useCurrency();
@@ -18,22 +19,14 @@ const DetailedSalesReport: React.FC = () => {
     return new Date().getTime();
   }, []);
 
-  const { isLoading, error, data } = db.useQuery({
-    Orders: {
-      $: {
-        where: {
-          createdAt: {
-            $gte: startDate ? new Date(startDate).getTime() : defaultStartDate,
-            $lte: endDate ? new Date(endDate).getTime() : defaultEndDate,
-          },
-        },
-      },
-      customer: {},
-      posOperator: {},
-    },
-  });
+  const from = startDate ? new Date(startDate).getTime() : defaultStartDate;
+  const to = endDate ? new Date(endDate).getTime() : defaultEndDate;
+  const { isLoading, error, data } = useApiQuery(
+    `reports-detailed-sales-${from}-${to}`,
+    (signal) => getDetailedSales({ from, to, pageSize: 100 }, signal),
+  );
 
-  const orders = useMemo(() => (data?.Orders || []).slice().sort((a, b) => b.createdAt - a.createdAt), [data?.Orders]);
+  const orders = useMemo(() => data?.data || [], [data]);
 
   return (
     <div>
@@ -148,7 +141,7 @@ const DetailedSalesReport: React.FC = () => {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {orders.map((order) => (
-            <tr key={order.id}>
+            <tr key={order.orderId}>
               <td className="px-6 py-4 whitespace-nowrap">
                 {order.orderNumber}
               </td>
@@ -156,14 +149,14 @@ const DetailedSalesReport: React.FC = () => {
                 {new Date(order.createdAt).toLocaleDateString()}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                {order.customer?.fullName}
+                {order.customerName}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                {order.posOperator?.fullName}
+                {order.posOperatorName}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <ul>
-                  {(order.items as { id: string; name: string; quantity: number }[]).map((item) => (
+                  {order.items.map((item) => (
                     <li key={item.id}>
                       {item.name} (x{item.quantity})
                     </li>

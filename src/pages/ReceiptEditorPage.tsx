@@ -4,11 +4,15 @@ import toast from "react-hot-toast";
 import AdminLayout from "../components/layouts/AdminLayout";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 import ReceiptEditor from "../components/receipts/ReceiptEditor";
-import db from "../instant";
 import { updateAppSettings } from "../api/appSettings";
 import { sendReceipt } from "../api/receipts";
+import {
+  getCurrentAppSettings,
+  getCustomerOptions,
+  getReceipt,
+} from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 import type {
-  Customer,
   Receipt,
   SendReceiptRequest,
   Settings,
@@ -33,15 +37,22 @@ export default function ReceiptEditorPage({
   const locationReceipt = (location.state as LocationState | null)?.receipt;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data, isLoading, error } = db.useQuery({
-    Receipts: {
-      $: { where: { id: receiptId } },
-      customer: { addresses: {} },
-      order: {},
+  const { data, isLoading, error, refetch } = useApiQuery(
+    `receipt-editor:${receiptId}`,
+    async (signal) => {
+      const [receipt, customers, appSettings] = await Promise.all([
+        getReceipt(receiptId, signal),
+        getCustomerOptions(
+          { pageSize: 100, sort: "fullName:asc", includeAddresses: true },
+          signal,
+        ),
+        getCurrentAppSettings(signal),
+      ]);
+
+      return { receipt, customers: customers.data, appSettings };
     },
-    Customers: { addresses: {} },
-    AppSettings: {},
-  });
+    Boolean(receiptId),
+  );
 
   if (user.role !== "SUPER_ADMIN") {
     return (
@@ -55,11 +66,11 @@ export default function ReceiptEditorPage({
     );
   }
 
-  const receipt = (data?.Receipts?.[0] as Receipt | undefined) ||
+  const receipt = data?.receipt ||
     (locationReceipt?.id === receiptId ? locationReceipt : undefined);
-  const customers = (data?.Customers || []) as Customer[];
-  const appSettings = data?.AppSettings?.[0];
-  const settings = (appSettings?.settings || {}) as Settings;
+  const customers = data?.customers || [];
+  const appSettings = data?.appSettings;
+  const settings: Settings = appSettings?.settings ?? { vatRate: 0 };
 
   const handleSaveFrom = async (profile: {
     businessName: string;
@@ -71,6 +82,7 @@ export default function ReceiptEditorPage({
 
     try {
       await updateAppSettings(appSettings.id, { ...settings, ...profile });
+      refetch();
       toast.success("From details saved");
     } catch (saveError) {
       toast.error(

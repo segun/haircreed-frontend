@@ -2,7 +2,7 @@
 
 ## Scope
 
-The frontend reads receipts, customers, orders, and application settings from InstantDB. All receipt creation, numbering, updates, PDF generation, email delivery, and application-settings writes must be performed by the backend.
+The frontend reads receipts, customers, orders, and application settings through the authenticated REST endpoints in `DATABASE_READS_BACKEND_API.md`. All receipt creation, numbering, updates, PDF generation, email delivery, and application-settings writes are performed by the backend.
 
 Base path: `/api/v1/receipts`
 
@@ -28,7 +28,7 @@ Idempotency-Key: <UUID>
 
 The frontend clears its session and returns to login when `session.expiresAt` is reached, a receipt request returns `401`, or the user logs out.
 
-## InstantDB Model
+## Receipt Persistence Model
 
 Add a `Receipts` entity with these fields:
 
@@ -262,14 +262,14 @@ Recommended statuses:
 
 ## Read Queries
 
-No new REST list or detail endpoints are required. The frontend reads:
+Receipt screens use these authenticated endpoints from `DATABASE_READS_BACKEND_API.md`:
 
-- Receipt history from `Receipts`
-- Receipt detail from `Receipts` with `customer` and `order`
-- Customer choices from `Customers`
-- From defaults and currency from `AppSettings`
+- `GET /api/v1/receipts` for sent receipt history
+- `GET /api/v1/receipts/:receiptId` for receipt, customer, and order detail
+- `GET /api/v1/customers/options` for customer choices
+- `GET /api/v1/app-settings/current` for business defaults and currency
 
-These reads remain reactive through InstantDB. Backend writes must link records correctly so those reads update automatically.
+Reads are snapshots. The frontend refetches affected endpoints after successful writes.
 
 ## Acceptance Checks
 

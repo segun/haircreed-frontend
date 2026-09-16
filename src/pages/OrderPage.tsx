@@ -9,7 +9,6 @@ import type {
   CustomerSearchType,
   Product,
 } from "../types";
-import db from "../instant";
 import { useCurrency } from "../context/CurrencyContext";
 import { createCustomer, updateCustomer } from "../api/customers";
 import { toast } from "react-hot-toast";
@@ -18,6 +17,12 @@ import { createOrder } from "../api/orders";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 import { UseProductModal } from "../components/common/UseProductModal";
 import { listProducts } from "../api/products";
+import {
+  getCurrentAppSettings,
+  getInventory,
+  lookupCustomer,
+} from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 
 interface OrderPageProps {
   user: User;
@@ -39,12 +44,14 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     isLoading: isDataLoading,
     error,
     data,
-  } = db.useQuery({
-    InventoryItems: {
-      attributes: { category: {} },
-      supplier: {},
-    },
-    AppSettings: {},
+    refetch,
+  } = useApiQuery("order-page", async (signal) => {
+    const [inventory, appSettings] = await Promise.all([
+      getInventory({ pageSize: 100 }, signal),
+      getCurrentAppSettings(signal),
+    ]);
+
+    return { inventoryItems: inventory.data, appSettings };
   });
 
   const [notes, setNotes] = useState("");
@@ -63,41 +70,15 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [isUseProductOpen, setIsUseProductOpen] = useState(false);
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [selectedProductForUse, setSelectedProductForUse] = useState<Product | null>(null);
-  const [customerQuery, setCustomerQuery] = useState<{
-    query: string;
-    type: CustomerSearchType;
-  } | null>(null);
-
-  const { data: customerData } = db.useQuery({
-    Customers: {
-      $: customerQuery
-        ? { where: { [customerQuery.type]: customerQuery.query } }
-        : { where: { id: "" } },
-      addresses: {},
-      orders: {},
-    },
-  });
-
   const handleFindCustomer = async (
     query: string,
     type: CustomerSearchType
   ): Promise<Partial<Customer> | null> => {
-    setCustomerQuery({ query, type });
-
     try {
-      const { data } = await db.queryOnce({
-        Customers: {
-          $:
-            type && query
-              ? { where: { [type]: query } }
-              : { where: { id: "" } },
-          addresses: {},
-          orders: {},
-        },
-      });
+      const result = await lookupCustomer(type, query);
 
-      if (data.Customers && data.Customers.length > 0) {
-        const found = (data.Customers[0] || {}) as Partial<Customer> & {
+      if (result) {
+        const found = result as Partial<Customer> & {
           newAddress?: Partial<CustomerAddress> | null;
         };
         setCustomer(found);
@@ -126,27 +107,11 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
     }
   };
 
-  useEffect(() => {
-    if (customerData?.Customers?.length) {
-      setCustomer(
-        customerData.Customers[0] as Partial<Customer> & {
-          newAddress?: Partial<CustomerAddress> | null;
-        }
-      );
-    }
-  }, [customerData]);
-
   const [totalAmount, setTotalAmount] = useState(0);
 
   const handleCreateOrder = async () => {
     setIsProcessing(true);
     let customerToUse = customer;
-
-    if (customerData?.Customers?.length) {
-      customerToUse = customerData.Customers[0] as Partial<Customer> & {
-        newAddress?: Partial<CustomerAddress> | null;
-      };
-    }
 
     if (!customerToUse || !customerToUse.id) {
       try {
@@ -202,7 +167,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       vat: vat,
       orderNumber: `ORD-${new Date().getTime()}`,
       totalAmount: totalAmount,
-      vatRate: data?.AppSettings?.[0]?.settings?.vatRate || 0,
+      vatRate: data?.appSettings.settings.vatRate || 0,
     };
 
     try {
@@ -222,6 +187,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
       setWigger("");
       setDiscount(0);
       setDeliveryCharge(0);
+      refetch();
     } catch (error) {
       console.error(error);
       toast.error("Failed to create order");
@@ -274,7 +240,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   const [price, setPrice] = useState<number | "">("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const vatRate = data?.AppSettings?.[0]?.settings?.vatRate || 0;
+  const vatRate = data?.appSettings.settings.vatRate || 0;
 
   useEffect(() => {
     const newSubtotal = orderItems.reduce(
@@ -346,7 +312,7 @@ const OrderPage: React.FC<OrderPageProps> = ({ user, onLogout }) => {
   if (error) return <div>Error: {error.message}</div>;
 
   // Normalize supplier and attribute categories to always be defined
-  const inventoryItems: InventoryItem[] = (data?.InventoryItems || []).map(
+  const inventoryItems: InventoryItem[] = (data?.inventoryItems || []).map(
     (item) =>
       ({
         ...item,

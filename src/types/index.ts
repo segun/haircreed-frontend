@@ -1,31 +1,64 @@
-import type { IInstantDatabase, InstaQLEntity } from "@instantdb/react";
-import type { _schema } from "../instant";
+export type User = {
+  id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  role: "POS_OPERATOR" | "ADMIN" | "SUPER_ADMIN";
+  requiresPasswordReset: boolean;
+  createdAt: number;
+  updatedAt: number;
+  passwordHash?: string;
+};
 
-export type DB = IInstantDatabase<typeof _schema>
-export type Schema = typeof _schema;
+export type AttributeItem = {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  category?: Omit<AttributeCategory, "items"> | null;
+};
 
-export type User = InstaQLEntity<Schema, 'Users'>;
-export type AttributeItem = InstaQLEntity<Schema, 'AttributeItem'> & {
-  category?: AttributeCategory;
-}
-export type AttributeCategory = InstaQLEntity<Schema, 'AttributeCategory'> & {
+export type AttributeCategory = {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
   items: AttributeItem[];
 };
-export type Supplier = InstaQLEntity<Schema, 'Suppliers'> & {};
-export type InventoryAudit = InstaQLEntity<Schema, 'InventoryAudits'> & {
-  inventoryItem?: InventoryItem;
+
+export type Supplier = {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phoneNumber?: string;
+  address?: string;
+  notes?: string;
+  createdAt: number;
 };
 
-export type InventoryItem = InstaQLEntity<Schema, 'InventoryItems'> & {
-  supplier: Supplier;
+export type InventoryAudit = {
+  id: string;
+  inventoryItemId: string;
+  action: string;
+  userId?: string;
+  details?: unknown;
+  quantityBefore?: number;
+  quantityAfter?: number;
+  createdAt: number;
+};
+
+export type InventoryItem = {
+  id: string;
+  quantity: number;
+  costPrice?: number;
+  lastStockedAt: number;
+  supplier: Supplier | null;
   attributes: AttributeItem[];
   audits?: InventoryAudit[];
 };
 
-export type InventoryItemWithDetails = Omit<InventoryItem, 'attributes' | 'supplier'> & {
-    attributes: (AttributeItem & { category: AttributeCategory })[];
-    supplier: Supplier;
-};
+export type InventoryItemWithDetails = InventoryItem;
 
 export type AppSettings = {
     id: string;
@@ -40,20 +73,73 @@ export type Settings = {
     currency?: string;
 }
 
-export type Wigger = InstaQLEntity<Schema, 'Wigger'>;
-
-export type Order = InstaQLEntity<Schema, 'Orders'> & {
-    customer: Customer;
-    posOperator: User;
-    wigger?: Wigger;
-    customerId?: string;
-  receipt?: Receipt;
+export type Wigger = {
+  id: string;
+  name: string;
+  createdAt?: number;
+  updatedAt?: number;
 };
-export type CustomerAddress = InstaQLEntity<Schema, 'CustomerAddress'>;
-export type Customer = InstaQLEntity<Schema, 'Customers'> & {
-    orders: Order[];
-    addresses: CustomerAddress[];
+
+export type OrderItem = {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type StatusHistoryItem = {
+  status: string;
+  timestamp: number;
+  userId?: string;
+};
+
+export type CustomerAddress = {
+  id: string;
+  address: string;
+  isPrimary: boolean;
+  createdAt: number;
+};
+
+export type Customer = {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  headSize?: string;
+  createdAt: number;
+  addresses: CustomerAddress[];
+  orders?: Order[];
   receipts?: Receipt[];
+};
+
+export type CustomerSummary = Omit<Customer, "addresses" | "orders" | "receipts"> & {
+  addresses?: CustomerAddress[];
+};
+
+export type Order = {
+  id: string;
+  orderNumber: string;
+  items: OrderItem[];
+  amount: number;
+  vatRate: number;
+  vatAmount: number;
+  discountType: string;
+  discountValue: number;
+  discountAmount: number;
+  deliveryCharge: number;
+  totalAmount: number;
+  orderStatus: string;
+  paymentStatus: string;
+  deliveryMethod: string;
+  createdAt: number;
+  updatedAt: number;
+  statusHistory: StatusHistoryItem[];
+  notes?: string;
+  customer: CustomerSummary | null;
+  posOperator: Pick<User, "id" | "fullName"> | null;
+  wigger?: Wigger;
+  customerId?: string;
+  receipt?: Receipt;
 };
 
 export type ReceiptStatus = 'DRAFT' | 'SENT';
@@ -66,9 +152,28 @@ export type ReceiptLineItem = {
   discount: number;
 };
 
-export type Receipt = InstaQLEntity<Schema, 'Receipts'> & {
+export type Receipt = {
+  id: string;
+  receiptNumber: number;
+  orderId: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  receiptDate: number;
   status: ReceiptStatus;
+  businessName: string;
+  businessAddress: string;
+  currency: string;
   lineItems: ReceiptLineItem[];
+  totalAmount: number;
+  createdByUserId: string;
+  updatedByUserId: string;
+  createdAt: number;
+  updatedAt: number;
+  sentAt?: number;
+  resentAt?: number;
+  sendCount: number;
   order?: Order;
   customer?: Customer;
 };

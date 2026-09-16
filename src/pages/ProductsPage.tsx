@@ -32,17 +32,6 @@ const ProductsPage: React.FC<PageProps> = ({ user, onLogout }) => {
   const [isUseProductOpen, setIsUseProductOpen] = useState(false);
   const [selectedProductForUse, setSelectedProductForUse] = useState<Product | null>(null);
 
-  // Role check: only SUPER_ADMIN and ADMIN can access
-  if (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN') {
-    return (
-      <AdminLayout user={user} onLogout={onLogout} pageTitle="Products">
-        <div className="text-center py-12">
-          <p className="text-red-600">You do not have permission to access this page.</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-
   // Fetch products on mount and when needed
   const fetchProducts = async () => {
     try {
@@ -57,8 +46,20 @@ const ProductsPage: React.FC<PageProps> = ({ user, onLogout }) => {
   };
 
   useEffect(() => {
+    if (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN') return;
     fetchProducts();
-  }, []);
+  }, [user.role]);
+
+  // Role check: only SUPER_ADMIN and ADMIN can access
+  if (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN') {
+    return (
+      <AdminLayout user={user} onLogout={onLogout} pageTitle="Products">
+        <div className="text-center py-12">
+          <p className="text-red-600">You do not have permission to access this page.</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   const handleAddClick = () => {
     setFormMode('add');

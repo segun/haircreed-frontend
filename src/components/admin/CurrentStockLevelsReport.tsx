@@ -1,22 +1,16 @@
 import React, { useMemo } from "react";
-import db from "../../instant";
+import { getCurrentStock } from "../../api/databaseReads";
 import { useCurrency } from "../../context/CurrencyContext";
+import { useApiQuery } from "../../hooks/useApiQuery";
 
 const CurrentStockLevelsReport: React.FC = () => {
     const { formatCurrency } = useCurrency();
-    const { isLoading, error, data } = db.useQuery({
-        InventoryItems: {
-            $: {
-                order: { lastStockedAt: "desc" },
-            },
-            attributes: {
-                category: {},
-            },
-            supplier: {},
-        },
-    });
+    const { isLoading, error, data } = useApiQuery(
+        "reports-current-stock",
+        getCurrentStock,
+    );
 
-    const items = useMemo(() => data?.InventoryItems || [], [data?.InventoryItems]);
+    const items = useMemo(() => data || [], [data]);
 
     const getInventoryItemName = (item: typeof items[0]) => {
         if (!item.attributes || item.attributes.length === 0) return "N/A";

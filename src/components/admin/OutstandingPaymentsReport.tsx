@@ -1,21 +1,17 @@
 
 import React, { useMemo } from 'react';
-import db from '../../instant';
+import { getOutstandingPayments } from '../../api/databaseReads';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useApiQuery } from '../../hooks/useApiQuery';
 
 const OutstandingPaymentsReport: React.FC = () => {
   const { formatCurrency } = useCurrency();
-  const { isLoading, error, data } = db.useQuery({
-    Orders: {
-      $: {
-        where: { paymentStatus: { $ne: 'PAID' } },
-        order: { createdAt: 'desc' },
-      },
-      customer: {},
-    },
-  });
+  const { isLoading, error, data } = useApiQuery(
+    'reports-outstanding-payments',
+    getOutstandingPayments,
+  );
 
-  const orders = useMemo(() => data?.Orders || [], [data?.Orders]);
+  const orders = useMemo(() => data || [], [data]);
 
   return (
     <div>
@@ -68,16 +64,15 @@ const OutstandingPaymentsReport: React.FC = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {orders.map((order) => (
-              <tr key={order.id}>
+              <tr key={order.orderId}>
                 <td className="px-6 py-4 whitespace-nowrap">{order.orderNumber}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{order.customer?.fullName}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{order.customerName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {order.customer?.email || order.customer?.phoneNumber}
+                  {order.customerEmail || order.customerPhone}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{formatCurrency(order.totalAmount)}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  {/* NOTE: Schema does not have amountPaid, assuming 0 for non-Paid orders */}
-                  0
+                  {formatCurrency(order.amountPaid)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {new Date(order.createdAt).toLocaleDateString()}

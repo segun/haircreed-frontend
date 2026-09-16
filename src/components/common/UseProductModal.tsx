@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import { X, Search } from 'lucide-react';
 import Modal from './Modal';
-import type { Product, Order } from '../../types';
-import { useProduct } from '../../api/products';
-import db from '../../instant';
+import type { Product } from '../../types';
+import { useProduct as submitProductUsage } from '../../api/products';
+import { getOrderOptions, type OrderOption } from '../../api/databaseReads';
+import { useApiQuery } from '../../hooks/useApiQuery';
 
 type UseProductModalProps = {
   isOpen: boolean;
@@ -24,35 +25,27 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-  // Fetch orders from InstantDB
-  const { data: ordersData } = db.useQuery({
-    Orders: {
-      customer: {},
-      posOperator: {},
-      wigger: {},
-    },
-  });
-
-  // Filter orders based on search query
-  const filteredOrders = useMemo(() => {
-    if (!ordersData?.Orders) return [];
-    
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return ordersData.Orders as Order[];
-
-    return (ordersData.Orders as Order[]).filter((order) => {
-      const matchesId = order.id?.toLowerCase().includes(query) || 
-                       order.orderNumber?.toLowerCase().includes(query);
-      const matchesCustomer = order.customer?.fullName?.toLowerCase().includes(query);
-      const matchesWigger = (order.wigger as any)?.name?.toLowerCase?.().includes(query) ||
-                           order.wigger?.toString().toLowerCase().includes(query);
-      const matchesDate = new Date(order.createdAt).toLocaleDateString().includes(query);
-
-      return matchesId || matchesCustomer || matchesWigger || matchesDate;
-    });
-  }, [ordersData?.Orders, searchQuery]);
+  const [selectedOrder, setSelectedOrder] = useState<OrderOption | null>(null);
+  const trimmedSearch = searchQuery.trim();
+  const createdOn = /^\d{4}-\d{2}-\d{2}$/.test(trimmedSearch)
+    ? trimmedSearch
+    : undefined;
+  const { data: ordersData, error: ordersError, isLoading: isLoadingOrders } =
+    useApiQuery(
+      `product-order-options:${trimmedSearch}`,
+      (signal) =>
+        getOrderOptions(
+          {
+            q: createdOn ? undefined : trimmedSearch,
+            createdOn,
+            pageSize: 25,
+            sort: 'createdAt:desc',
+          },
+          signal,
+        ),
+      isOpen,
+    );
+  const filteredOrders = ordersData?.data || [];
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -75,7 +68,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await useProduct({
+      await submitProductUsage({
         productId: product.id,
         orderId: selectedOrder?.id,
         quantity: formData.quantity,
@@ -108,7 +101,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
     onClose();
   };
 
-  const handleOrderSelect = (order: Order) => {
+  const handleOrderSelect = (order: OrderOption) => {
     setSelectedOrder(order);
     setFormData({ ...formData, orderId: order.id });
     setIsDropdownOpen(false);
@@ -178,7 +171,13 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-zinc-300 rounded-md shadow-lg z-10 max-h-64 overflow-y-auto">
                   {filteredOrders.length === 0 ? (
                     <div className="p-3 text-sm text-zinc-500 text-center">
-                      {searchQuery ? 'No orders found' : 'Start typing to search'}
+                      {isLoadingOrders
+                        ? 'Loading orders...'
+                        : ordersError
+                          ? ordersError.message
+                          : searchQuery
+                            ? 'No orders found'
+                            : 'No orders available'}
                     </div>
                   ) : (
                     filteredOrders.map((order) => (
@@ -197,7 +196,7 @@ export const UseProductModal: React.FC<UseProductModalProps> = ({
                             <p className="text-zinc-500">{formatDate(order.createdAt)}</p>
                             {order.wigger && (
                               <p className="text-zinc-400">
-                                {typeof order.wigger === 'string' ? order.wigger : (order.wigger as any)?.name}
+                                {order.wigger.name}
                               </p>
                             )}
                           </div>

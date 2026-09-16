@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { PlusCircle } from "lucide-react";
-import db from "../instant";
 import AttributeManager from "../components/admin/AttributeManager";
 import AdminLayout from "../components/layouts/AdminLayout";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import { createCategory, deleteCategory as apiDeleteCategory } from "../api/inventoryAttributes";
+import { getAttributeCategories } from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 import type { AttributeCategory, User } from "../types";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 
@@ -22,12 +23,11 @@ export default function InventoryAttributesPage({
     const [categoryToDelete, setCategoryToDelete] = useState<AttributeCategory | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const { isLoading, error, data } = db.useQuery({
-        AttributeCategory: {
-            items: {}
-        }
-    });
-    const categories = data?.AttributeCategory;
+    const { isLoading, error, data, refetch } = useApiQuery(
+        "inventory-attribute-categories",
+        getAttributeCategories,
+    );
+    const categories = data?.data;
 
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
@@ -36,6 +36,7 @@ export default function InventoryAttributesPage({
             setWriteError(null);
             await createCategory(newCategoryName);
             setNewCategoryName("");
+            refetch();
         } catch (err) {
             setWriteError((err as Error).message);
         } finally {
@@ -54,6 +55,7 @@ export default function InventoryAttributesPage({
             setWriteError(null);
             await apiDeleteCategory(categoryToDelete.id);
             setCategoryToDelete(null);
+            refetch();
         } catch (err) {
             setWriteError((err as Error).message);
         } finally {
@@ -61,7 +63,7 @@ export default function InventoryAttributesPage({
         }
     };
 
-    const handleItemUpdate = () => {};
+    const handleItemUpdate = () => refetch();
 
     return (
         <>

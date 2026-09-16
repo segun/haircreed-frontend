@@ -1,36 +1,22 @@
 import React, { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import db from '../../instant';
+import type { DashboardResponse } from '../../api/databaseReads';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-const DiscountVsFullPriceChart: React.FC = () => {
-  const { isLoading, error, data } = db.useQuery({ Orders: {} });
+type DiscountVsFullPriceChartProps = {
+  data: DashboardResponse['charts']['discountVsFullPrice'];
+};
+
+const DiscountVsFullPriceChart: React.FC<DiscountVsFullPriceChartProps> = ({ data }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const chartData = useMemo(() => {
-    if (!data?.Orders) return [];
-
-    const salesByDate = data.Orders.reduce((acc, order) => {
-      const date = new Date(order.createdAt).toLocaleDateString();
-      if (!acc[date]) {
-        acc[date] = { date, discounted: 0, fullPrice: 0 };
-      }
-
-      if (order.discountAmount && order.discountAmount > 0) {
-        acc[date].discounted += order.totalAmount;
-      } else {
-        acc[date].fullPrice += order.totalAmount;
-      }
-
-      return acc;
-    }, {} as { [key: string]: { date: string; discounted: number; fullPrice: number } });
-
-    return Object.values(salesByDate).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
+    return data.map((item) => ({
+      date: new Date(item.bucketStart).toLocaleDateString(),
+      discounted: item.discounted,
+      fullPrice: item.fullPrice,
+    }));
   }, [data]);
-
-  if (isLoading) return <p>Loading chart...</p>;
-  if (error) return <p>Error loading chart: {error.message}</p>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">

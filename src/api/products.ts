@@ -1,4 +1,5 @@
 import type { Product, ProductStockAudit, ProductUsageAudit } from "../types";
+import { authorizedGet, type DataResponse, type PaginatedResponse } from "./client";
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_API_PRODUCTS_ENDPOINT}`;
 
@@ -9,23 +10,26 @@ const getLoggedInUserId = (): string => {
     const parsed = JSON.parse(stored);
     if (!parsed?.id) throw new Error('No user id in stored user');
     return parsed.id;
-  } catch (err) {
+  } catch {
     throw new Error('Failed to parse logged-in user from localStorage');
   }
 };
 
 // Fetch all products
 export const listProducts = async (): Promise<Product[]> => {
-  const response = await fetch(BASE_URL);
-  if (!response.ok) throw new Error('Failed to fetch products');
-  return response.json();
+  const response = await authorizedGet<PaginatedResponse<Product>>(
+    "/api/v1/products",
+    { pageSize: 100, sort: "name:asc" },
+  );
+  return response.data;
 };
 
 // Fetch single product
 export const getProduct = async (id: string): Promise<Product> => {
-  const response = await fetch(`${BASE_URL}/${id}`);
-  if (!response.ok) throw new Error('Failed to fetch product');
-  return response.json();
+  const response = await authorizedGet<DataResponse<Product>>(
+    `/api/v1/products/${encodeURIComponent(id)}`,
+  );
+  return response.data;
 };
 
 // Add a new product
@@ -125,10 +129,11 @@ export const deleteProduct = async (id: string): Promise<void> => {
 
 // Fetch stock audit history
 export const getStockAudits = async (productId?: string): Promise<ProductStockAudit[]> => {
-  const params = productId ? `?productId=${productId}` : '';
-  const response = await fetch(`${BASE_URL}/audits/stock${params}`);
-  if (!response.ok) throw new Error('Failed to fetch stock audits');
-  return response.json();
+  const response = await authorizedGet<DataResponse<ProductStockAudit[]>>(
+    "/api/v1/products/audits/stock",
+    { productId },
+  );
+  return response.data;
 };
 
 // Fetch usage audit history
@@ -136,11 +141,9 @@ export const getUsageAudits = async (filters?: {
   productId?: string;
   orderId?: string;
 }): Promise<ProductUsageAudit[]> => {
-  const params = new URLSearchParams();
-  if (filters?.productId) params.append('productId', filters.productId);
-  if (filters?.orderId) params.append('orderId', filters.orderId);
-  const queryString = params.toString() ? `?${params.toString()}` : '';
-  const response = await fetch(`${BASE_URL}/audits/usage${queryString}`);
-  if (!response.ok) throw new Error('Failed to fetch usage audits');
-  return response.json();
+  const response = await authorizedGet<DataResponse<ProductUsageAudit[]>>(
+    "/api/v1/products/audits/usage",
+    filters,
+  );
+  return response.data;
 };

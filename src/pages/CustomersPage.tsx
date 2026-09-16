@@ -16,6 +16,7 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const handleSaveCustomer = async (customerData: Omit<Customer, "id" | "createdAt" | "orders" | "addresses"> & { id?: string; newAddress?: Partial<CustomerAddress> | null }) => {
         setIsSubmitting(true);
@@ -32,6 +33,7 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                 await createCustomer(dataToSend);
                 toast.success("Customer created successfully");
             }
+            setRefreshKey((current) => current + 1);
             setIsFormOpen(false);
             setEditingCustomer(null);
         } catch (error) {
@@ -115,6 +117,7 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                 <CustomerTable
                     onEdit={handleEditCustomer}
                     onDelete={handleDeleteCustomer}
+                    refreshKey={refreshKey}
                 />
             </div>
         </AdminLayout>

@@ -1,30 +1,20 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import db from '../../instant';
+import type { DashboardResponse } from '../../api/databaseReads';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-const SalesByPosOperatorChart: React.FC = () => {
-  const { isLoading, error, data } = db.useQuery({ Users: { createdOrders: {} } });
+type SalesByPosOperatorChartProps = {
+  data: DashboardResponse['charts']['salesByPosOperator'];
+};
+
+const SalesByPosOperatorChart: React.FC<SalesByPosOperatorChartProps> = ({ data }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
-
-  const chartData = useMemo(() => {
-    if (!data?.Users) return [];
-
-    return data.Users.map(user => ({
-      name: user.fullName,
-      sales: user.createdOrders.reduce((acc, order) => acc + order.totalAmount, 0),
-    }));
-
-  }, [data]);
-
-  if (isLoading) return <p>Loading chart...</p>;
-  if (error) return <p>Error loading chart: {error.message}</p>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold text-zinc-800 mb-4">Sales by POS Operator</h3>
         <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
+            <BarChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                     dataKey="name" 

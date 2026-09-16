@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { InventoryItem, InventoryItemWithDetails, User, InventoryAudit } from '../../types';
 import ConfirmDialog from '../common/ConfirmDialog';
 import Modal from '../common/Modal';
-import db from '../../instant';
+import { getInventoryAudits } from '../../api/databaseReads';
+import { useApiQuery } from '../../hooks/useApiQuery';
 import { useCurrency } from '../../context/CurrencyContext';
 
 type InventoryItemTableProps = {
@@ -185,39 +186,19 @@ type InventoryAuditsModalProps = {
 };
 
 const InventoryAuditsModal: React.FC<InventoryAuditsModalProps> = ({ isOpen, inventoryItemId, onClose, itemName }) => {
-    const [audits, setAudits] = useState<InventoryAudit[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-
-    useEffect(() => {
-        let mounted = true;
-        const load = async () => {
-            if (!isOpen || !inventoryItemId) return;
-            setIsLoading(true);
-            try {
-                const { data } = await db.queryOnce({
-                    InventoryAudits: {
-                        $: { where: { inventoryItemId } },
-                    },
-                });
-                if (!mounted) return;
-                const list = (data.InventoryAudits || []) as InventoryAudit[];
-                list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                setAudits(list);
-            } catch (err) {
-                console.error('Failed to load inventory audits', err);
-                setAudits([]);
-            } finally {
-                if (mounted) setIsLoading(false);
-            }
-        };
-        load();
-        return () => { mounted = false; };
-    }, [isOpen, inventoryItemId]);
+    const { data, error, isLoading } = useApiQuery(
+        `inventory-audits:${inventoryItemId ?? ''}`,
+        (signal) => getInventoryAudits(inventoryItemId as string, signal),
+        isOpen && inventoryItemId !== null,
+    );
+    const audits = (data?.data || []) as InventoryAudit[];
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Inventory Audits${itemName ? ` — ${itemName}` : ''}`}>
             {isLoading ? (
                 <p className="text-sm text-zinc-500">Loading audits...</p>
+            ) : error ? (
+                <p className="text-sm text-red-600">Error: {error.message}</p>
             ) : audits.length === 0 ? (
                 <p className="text-sm text-zinc-500">No audits found for this item.</p>
             ) : (

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useEffect, useRef } from "react";
-import db from "../instant";
+import React, { useState, useEffect, useRef } from "react";
 import type { Order, User } from "../types";
 import AdminLayout from "../components/layouts/AdminLayout";
 import LoadingIndicator from "../components/common/LoadingIndicator";
@@ -8,17 +7,21 @@ import OrderDetailsModal from "../components/orders/OrderDetailsModal";
 import { Check, X } from "lucide-react";
 import { updateOrder } from "../api/orders";
 import { toast } from "react-hot-toast";
+import { getOrders, getUsers } from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 
-const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
-  const { isLoading, error, data } = db.useQuery({
-    Orders: {
-      customer: {},
-      posOperator: {},
-      wigger: {},
-    },
-    Users: {},
+type ViewOrdersPageProps = {
+  user: User;
+  onLogout: () => void;
+};
 
-  });
+const startOfDate = (value: string) =>
+  value ? new Date(`${value}T00:00:00`).getTime() : undefined;
+
+const endOfDate = (value: string) =>
+  value ? new Date(`${value}T23:59:59.999`).getTime() : undefined;
+
+const ViewOrdersPage: React.FC<ViewOrdersPageProps> = ({ user, onLogout }) => {
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filters, setFilters] = useState({
@@ -36,6 +39,41 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const {
+    data: ordersData,
+    isLoading: isLoadingOrders,
+    error: ordersError,
+    refetch: refetchOrders,
+  } = useApiQuery(
+    `orders:${currentPage}:${JSON.stringify(filters)}`,
+    (signal) =>
+      getOrders(
+        {
+          paymentStatus: filters.paymentStatus,
+          deliveryMethod: filters.deliveryMethod,
+          orderStatus: filters.orderStatus,
+          customer: filters.customer,
+          orderNumber: filters.orderNumber,
+          wigger: filters.wigger,
+          posOperatorId: filters.posOperator,
+          createdFrom: startOfDate(filters.createdAtStart),
+          createdTo: endOfDate(filters.createdAtEnd),
+          updatedFrom: startOfDate(filters.updatedAtStart),
+          updatedTo: endOfDate(filters.updatedAtEnd),
+          page: currentPage,
+          pageSize: itemsPerPage,
+          sort: "createdAt:desc",
+        },
+        signal,
+      ),
+  );
+  const {
+    data: usersData,
+    isLoading: isLoadingUsers,
+    error: usersError,
+  } = useApiQuery("order-user-options", (signal) => getUsers("options", signal));
+  const isLoading = isLoadingOrders || isLoadingUsers;
+  const error = ordersError || usersError;
 
   // Hover popup state
   const hoverTimerRef = useRef<number | null>(null);
@@ -57,71 +95,14 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     setCurrentPage(1); // Reset to first page on filter change
   };
 
-  const filteredOrders = useMemo(() => {
-    let orders = ((data as any)?.Orders as Order[]) || [];
+  const currentItems = ordersData?.data || [];
+  const totalPages = ordersData?.pagination.totalPages || 0;
 
-    if (filters.paymentStatus) {
-      orders = orders.filter((o) => o.paymentStatus === filters.paymentStatus);
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
-    if (filters.deliveryMethod) {
-      orders = orders.filter(
-        (o) => o.deliveryMethod === filters.deliveryMethod
-      );
-    }
-    if (filters.orderStatus) {
-      orders = orders.filter((o) => o.orderStatus === filters.orderStatus);
-    }
-    if (filters.customer) {
-      orders = orders.filter((o) =>
-        o.customer?.fullName
-          .toLowerCase()
-          .includes(filters.customer.toLowerCase())
-      );
-    }
-    if (filters.orderNumber) {
-      orders = orders.filter((o) =>
-        (o.orderNumber || "").toLowerCase().includes(filters.orderNumber.toLowerCase())
-      );
-    }
-    if (filters.wigger) {
-      orders = orders.filter((o) =>
-        (o.wigger?.name || "").toLowerCase().includes(filters.wigger.toLowerCase())
-      );
-    }
-    if (filters.posOperator) {
-      orders = orders.filter((o) => o.posOperator?.id === filters.posOperator);
-    }
-    if (filters.createdAtStart) {
-      orders = orders.filter(
-        (o) => new Date(o.createdAt) >= new Date(filters.createdAtStart)
-      );
-    }
-    if (filters.createdAtEnd) {
-      const endDate = new Date(filters.createdAtEnd);
-      endDate.setHours(23, 59, 59, 999);
-      orders = orders.filter((o) => new Date(o.createdAt) <= endDate);
-    }
-
-    if (filters.updatedAtStart) {
-      orders = orders.filter(
-        (o) => new Date(o.updatedAt) >= new Date(filters.updatedAtStart)
-      );
-    }
-    if (filters.updatedAtEnd) {
-      const endDate = new Date(filters.updatedAtEnd);
-      endDate.setHours(23, 59, 59, 999);
-      orders = orders.filter((o) => new Date(o.updatedAt) <= endDate);
-    }
-
-    // Sort by most recent on top
-    return orders.sort((a, b) => b.createdAt - a.createdAt);
-  }, [(data as any)?.Orders, filters]);
-
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  }, [currentPage, totalPages]);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -173,12 +154,14 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     if (selectedOrder?.id === orderId) {
       setSelectedOrder({ ...selectedOrder, orderStatus: status });
     }
+    refetchOrders();
   };
 
   const handlePaymentStatusChange = (orderId: string, status: string) => {
     if (selectedOrder?.id === orderId) {
       setSelectedOrder({ ...selectedOrder, paymentStatus: status });
     }
+    refetchOrders();
   };
 
   const handleWiggerEdit = (orderId: string, currentWigger: string) => {
@@ -192,6 +175,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
       await updateOrder(orderId, user.id, { wigger: wiggerForEdit || undefined } as any);
       toast.success("Wigger updated successfully!");
       setEditingWiggerId(null);
+      refetchOrders();
     } catch (error) {
       console.error("Failed to update wigger:", error);
       toast.error("Failed to update wigger");
@@ -205,7 +189,7 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
     setWiggerForEdit("");
   };
 
-  const users = (data?.Users as User[]) || [];
+  const users = usersData?.data || [];
 
   const getOrderStatusColor = (status: string) => {
     switch (status) {
@@ -607,6 +591,8 @@ const ViewOrdersPage: React.FC<any> = ({ user, onLogout }) => {
           onClose={handleCloseModal}
           onOrderStatusChange={handleOrderStatusChange}
           onPaymentStatusChange={handlePaymentStatusChange}
+          onOrderUpdated={refetchOrders}
+          onOrderDeleted={refetchOrders}
         />
       )}
     </AdminLayout>

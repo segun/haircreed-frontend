@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
-import db from '../instant';
 import type { Supplier, AttributeCategory, InventoryItemWithDetails } from '../types';
 import { createInventoryItem, updateInventoryItem, deleteInventoryItem } from '../api/inventory';
+import { getAttributeCategories, getInventory, getSuppliers } from '../api/databaseReads';
+import { useApiQuery } from '../hooks/useApiQuery';
 import AdminLayout from '../components/layouts/AdminLayout';
 import InventoryItemForm from '../components/admin/InventoryItemForm';
 import InventoryItemTable from '../components/admin/InventoryItemTable';
@@ -12,16 +13,18 @@ import SupplierForm from '../components/admin/SupplierForm';
 import LoadingIndicator from '../components/common/LoadingIndicator';
 
 const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
-    const { isLoading, error, data } = db.useQuery({
-        InventoryItems: {
-            attributes: { category: {} },
-            supplier: {},
-        },
-        Suppliers: {},
-        AttributeCategory: {
-            items: {}
-        }
-    });
+    const inventoryQuery = useApiQuery(
+        'inventory?pageSize=100',
+        (signal) => getInventory({ pageSize: 100 }, signal),
+    );
+    const suppliersQuery = useApiQuery(
+        'suppliers?pageSize=100',
+        (signal) => getSuppliers({ pageSize: 100 }, signal),
+    );
+    const attributeCategoriesQuery = useApiQuery(
+        'inventory-attribute-categories',
+        getAttributeCategories,
+    );
 
     const [editingItem, setEditingItem] = useState<InventoryItemWithDetails | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -31,7 +34,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
     const [writeError, setWriteError] = useState<string | null>(null);
 
     // Ensure supplier is always defined for each inventory item
-    const inventoryItems = (data?.InventoryItems || []).map(item => ({
+    const inventoryItems = (inventoryQuery.data?.data || []).map(item => ({
         ...item,
         supplier: item.supplier ?? {
             id: '',
@@ -44,8 +47,10 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
             notes: ''
         }
     })) as InventoryItemWithDetails[];
-    const suppliers = data?.Suppliers || [];
-    const attributeCategories = data?.AttributeCategory as AttributeCategory[] || [];
+    const suppliers = suppliersQuery.data?.data || [];
+    const attributeCategories = (attributeCategoriesQuery.data?.data || []) as AttributeCategory[];
+    const isLoading = inventoryQuery.isLoading || suppliersQuery.isLoading || attributeCategoriesQuery.isLoading;
+    const error = inventoryQuery.error || suppliersQuery.error || attributeCategoriesQuery.error;
 
     const handleSave = async (payload: { id?: string; quantity: number; costPrice?: number; supplierId?: string; attributeIds: string[] }) => {
         setIsSubmitting(true);
@@ -56,6 +61,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
             } else {
                 await createInventoryItem(payload);
             }
+            inventoryQuery.refetch();
             setIsFormOpen(false);
             setEditingItem(null);
         } catch (err) {
@@ -70,6 +76,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
         setWriteError(null);
         try {
             await createSupplier(supplierPayload);
+            suppliersQuery.refetch();
             setIsSupplierModalOpen(false);
         } catch (err) {
             // This error will be displayed inside the modal
@@ -96,6 +103,7 @@ const InventoryPage: React.FC<any> = ({ user, onLogout }) => {
         setWriteError(null);
         try {
             await deleteInventoryItem(itemId);
+            inventoryQuery.refetch();
         } catch (err) {
             setWriteError((err as Error).message);
         } finally {

@@ -2,17 +2,18 @@
 
 ## Architecture Overview
 
-This is a **React 19 + TypeScript + Vite** Point-of-Sale (POS) system for a hair wig business. The app uses **InstantDB** as a real-time database (not a traditional REST backend for data queries) and has a **separate REST API** for auth, business logic, and reporting.
+This is a **React 19 + TypeScript + Vite** Point-of-Sale (POS) system for a hair wig business. The frontend uses an authenticated **REST API** for reads, authentication, business logic, reporting, and mutations.
 
-### Dual Data Architecture
-- **InstantDB**: Real-time reactive queries for entities (Users, Orders, Inventory, Customers, etc.) via `db.useQuery()` hooks
-- **REST API**: Traditional endpoints for authentication, dashboard analytics, PDF generation, and complex operations
+### Data Architecture
+- **REST API reads**: Typed functions in `src/api/databaseReads.ts`, consumed through `useApiQuery`
+- **REST API writes**: Resource-specific modules in `src/api/`
+- **Authentication**: Bearer token from the in-memory auth session on every database read
 - API base URL and endpoints configured via `VITE_API_*` environment variables
 
 ## Key Technologies
 
 - **Frontend**: React 19, TypeScript, React Router v7, TailwindCSS v4, Vite
-- **Database**: InstantDB (`@instantdb/react`) - schema-first with type safety
+- **Database access**: Backend REST API; the frontend has no direct database dependency
 - **UI Libraries**: Lucide React (icons), React Hot Toast (notifications), Recharts (charts)
 - **Styling**: TailwindCSS v4 with Vite plugin (no PostCSS config needed)
 
@@ -20,10 +21,7 @@ This is a **React 19 + TypeScript + Vite** Point-of-Sale (POS) system for a hair
 
 ```
 src/
-├── instant.ts              # InstantDB initialization & schema export
-├── instant.schema.ts       # Type-safe schema wrapper
-├── instant.perms.ts        # InstantDB permissions rules
-├── types/index.ts          # Global TypeScript types (derived from InstantDB schema)
+├── types/index.ts          # REST DTO and application types
 ├── api/                    # REST API client functions (auth, reports, dashboard)
 ├── components/
 │   ├── admin/              # Admin-specific components (forms, tables, reports)
@@ -35,32 +33,22 @@ src/
 └── hooks/                  # Custom React hooks
 ```
 
-## InstantDB Patterns
+## REST Read Patterns
 
-### Schema & Types
-- Schema defined in `instant.ts` using `i.schema()` - single source of truth
-- Types auto-generated: `InstaQLEntity<Schema, 'EntityName'>` in `types/index.ts`
-- Links define relationships (e.g., `CustomerOrder`, `InventoryItemSupplier`)
+### Types
+- Wire contracts are documented in `DATABASE_READS_BACKEND_API.md`
+- Frontend DTOs live in `types/index.ts`
+- Shared response envelopes and authorized transport live in `api/client.ts`
 
 ### Data Fetching
 ```typescript
-// Reactive queries with relationships
-const { isLoading, error, data } = db.useQuery({
-  InventoryItems: {
-    attributes: { category: {} },  // Nested relationships
-    supplier: {},
-  },
-});
-
-// One-time queries (e.g., customer search)
-const { data } = await db.queryOnce({
-  Customers: {
-    $: { where: { email: 'user@example.com' } },
-    addresses: {},
-    orders: {},
-  },
-});
+const { data, isLoading, error, refetch } = useApiQuery(
+  "inventory",
+  (signal) => getInventory({ pageSize: 100 }, signal),
+);
 ```
+
+REST reads are snapshots. Call `refetch()` or change the query key after a successful mutation.
 
 ### Common Entities
 - `Users`: roles (POS_OPERATOR, ADMIN, SUPER_ADMIN), `requiresPasswordReset` flag
@@ -139,7 +127,7 @@ npm run lint     # ESLint with React hooks & refresh plugins
 ```
 
 ### Common Tasks
-1. **Add new entity**: Update `instant.ts` schema → types auto-generated → create API module if REST needed
+1. **Add new entity**: Update the backend API contract and endpoint → add frontend DTOs and API functions
 2. **New page**: Create in `pages/` → add route in `App.tsx` → update `AdminLayout` navigation array
 3. **New component**: Follow folder structure (`admin/`, `common/`, etc.) → use TypeScript types from `types/index.ts`
 
@@ -155,15 +143,14 @@ npm run lint     # ESLint with React hooks & refresh plugins
 
 ## Important Notes
 
-- **No direct DB writes from frontend**: All mutations go through REST API (e.g., `createOrder()`, `updateUser()`)
-- **InstantDB for reads only**: Queries are reactive and real-time, writes via backend
+- **No direct database access from frontend**: All reads and mutations go through the REST API
+- **Snapshot reads**: Refetch affected queries after mutations
 - **Role enforcement**: UI-level only in `AdminLayout` (disabled links) - backend must enforce security
 - **Toast notifications**: Use `react-hot-toast` for user feedback on actions
-- **Type safety**: Leverage `InstaQLEntity` types - avoid `any` for entities
+- **Type safety**: Use DTOs from `types/index.ts` and avoid `any` for entities
 
 ## Testing & Debugging
 
 - Check `roadmap.txt` for feature status and planned work
-- InstantDB queries log to console when `db.queryOnce()` runs
-- Use React DevTools to inspect `db.useQuery()` hook state
+- Use React DevTools to inspect `useApiQuery()` state
 - Backend API errors surfaced via `throw new Error()` in API modules

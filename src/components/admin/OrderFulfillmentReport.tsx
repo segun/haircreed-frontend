@@ -1,18 +1,16 @@
 import React, { useMemo } from 'react';
-import db from '../../instant';
+import { getOrderFulfillment } from '../../api/databaseReads';
+import { useApiQuery } from '../../hooks/useApiQuery';
+
+const INCLUDED_STATUSES = ['CREATED', 'IN PROGRESS', 'COMPLETED', 'DISPATCHED', 'RETURNED'];
 
 const OrderFulfillmentReport: React.FC = () => {
-  const { isLoading, error, data } = db.useQuery({
-    Orders: {
-      $: {
-        where: { orderStatus: { $in: ['CREATED', 'IN PROGRESS', 'COMPLETED', 'DISPATCHED', 'RETURNED'] } },
-        order: { createdAt: 'desc' },
-      },
-      customer: {},
-    },
-  });
+  const { isLoading, error, data } = useApiQuery(
+    'reports-order-fulfillment',
+    (signal) => getOrderFulfillment(INCLUDED_STATUSES, signal),
+  );
 
-  const orders = useMemo(() => data?.Orders || [], [data?.Orders]);
+  const orders = useMemo(() => data || [], [data]);
 
   return (
     <div>
@@ -65,9 +63,9 @@ const OrderFulfillmentReport: React.FC = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {orders.map((order) => (
-              <tr key={order.id}>
+              <tr key={order.orderId}>
                 <td className="px-6 py-4 whitespace-nowrap">{order.orderNumber}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{order.customer?.fullName}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{order.customerName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {new Date(order.createdAt).toLocaleDateString()}
                 </td>

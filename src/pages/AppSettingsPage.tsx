@@ -2,18 +2,19 @@
 import React, { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { createAppSettings, updateAppSettings } from "../api/appSettings";
-import db from "../instant";
+import { getCurrentAppSettings } from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 import type { Settings } from "../types";
 import AdminLayout from '../components/layouts/AdminLayout';
 
 const AppSettingsPage: React.FC<any> = ({ user, onLogout }) => {
-  const { data, isLoading, error } = db.useQuery({
-    AppSettings: {},
-  });
+  const { data: appSettings, isLoading, error, refetch } = useApiQuery(
+    "current-app-settings",
+    getCurrentAppSettings,
+    user.role === "SUPER_ADMIN",
+  );
 
   const [settings, setSettings] = useState<Settings>({ vatRate: 0, businessName: '', businessAddress: '', businessLogo: '', currency: '$' });
-
-  const appSettings = data?.AppSettings?.[0];
 
   useEffect(() => {
     if (appSettings) {
@@ -32,6 +33,7 @@ const AppSettingsPage: React.FC<any> = ({ user, onLogout }) => {
         success: 'Settings saved successfully!',
         error: (err: Error) => `Failed to save settings: ${err.message}`,
       });
+      refetch();
     } catch (error) {
       console.error('Failed to save settings:', error);
     }

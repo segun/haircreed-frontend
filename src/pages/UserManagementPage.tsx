@@ -4,7 +4,8 @@ import { createUser, deleteUser, updateUser } from "../api/users";
 import AdminLayout from "../components/layouts/AdminLayout";
 import UserForm from "../components/admin/UserForm";
 import UserTable from "../components/admin/UserTable";
-import db from "../instant";
+import { getUsers } from "../api/databaseReads";
+import { useApiQuery } from "../hooks/useApiQuery";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 
 type UserManagementPageProps = {
@@ -13,8 +14,12 @@ type UserManagementPageProps = {
 };
 
 const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout }: UserManagementPageProps) => {
-    const { data } = db.useQuery({ Users: {} });
-    const users = data?.Users || [];
+    const { data, error, isLoading, refetch } = useApiQuery(
+        "users:management",
+        (signal) => getUsers("management", signal),
+        user.role === "SUPER_ADMIN",
+    );
+    const users = (data?.data || []) as User[];
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,6 +37,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
             } else {
                 await createUser(user);
             }
+            refetch();
             setIsFormOpen(false);
             setEditingUser(null);
         } finally {
@@ -48,6 +54,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
         setIsSubmitting(true);
         try {
             await deleteUser(userId);
+            refetch();
         } finally {
             setIsSubmitting(false);
         }
@@ -73,7 +80,8 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ user, onLogout 
     return (
         <AdminLayout pageTitle="User Management" user={user || undefined} onLogout={onLogout}>
             <div className="p-4">
-                {isSubmitting && <LoadingIndicator />}
+                {(isSubmitting || isLoading) && <LoadingIndicator />}
+                {error && <p className="mb-4 bg-red-100 p-3 text-sm text-red-600">Error: {error.message}</p>}
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">User Management</h1>
                     <button

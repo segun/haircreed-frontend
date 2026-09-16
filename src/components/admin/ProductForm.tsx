@@ -62,7 +62,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         // add mode
         await onSave({ name: formData.name, quantity: formData.quantity });
       }
-    } catch (err) {
+    } catch {
       // Error is handled by parent component
     }
   };

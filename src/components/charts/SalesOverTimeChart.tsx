@@ -1,32 +1,19 @@
 
 import React, { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import db from '../../instant';
+import type { DashboardResponse } from '../../api/databaseReads';
 
-const SalesOverTimeChart: React.FC = () => {
-  const { isLoading, error, data } = db.useQuery({ Orders: {} });
+type SalesOverTimeChartProps = {
+  data: DashboardResponse['charts']['salesOverTime'];
+};
 
+const SalesOverTimeChart: React.FC<SalesOverTimeChartProps> = ({ data }) => {
   const chartData = useMemo(() => {
-    if (!data?.Orders) return [];
-
-    const salesByDate = data.Orders.reduce((acc, order) => {
-      const date = new Date(order.createdAt).toLocaleDateString();
-      if (!acc[date]) {
-        acc[date] = 0;
-      }
-      acc[date] += order.totalAmount;
-      return acc;
-    }, {} as { [key: string]: number });
-
-    return Object.keys(salesByDate).map(date => ({
-      date,
-      sales: salesByDate[date],
-    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
+    return data.map((item) => ({
+      date: new Date(item.bucketStart).toLocaleDateString(),
+      sales: item.sales,
+    }));
   }, [data]);
-
-  if (isLoading) return <p>Loading chart...</p>;
-  if (error) return <p>Error loading chart: {error.message}</p>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">

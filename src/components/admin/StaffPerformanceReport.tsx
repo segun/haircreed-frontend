@@ -1,39 +1,17 @@
 
 import React, { useMemo } from 'react';
-import db from '../../instant';
+import { getStaffPerformance } from '../../api/databaseReads';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useApiQuery } from '../../hooks/useApiQuery';
 
 const StaffPerformanceReport: React.FC = () => {
   const { formatCurrency } = useCurrency();
-  const { isLoading, error, data } = db.useQuery({
-    Users: {
-      createdOrders: {},
-    },
-  });
+  const { isLoading, error, data } = useApiQuery(
+    'reports-staff-performance',
+    (signal) => getStaffPerformance({}, signal),
+  );
 
-  const users = useMemo(() => data?.Users || [], [data]);
-
-  const performanceData = useMemo(() => {
-    console.log('Users data:', users);
-    console.log("User Orders data:", users.map(user => user.createdOrders));
-
-    return users.map((user) => {
-      const totalOrders = user.createdOrders.length;
-      const totalSales = user.createdOrders.reduce(
-        (acc, order) => acc + (order.totalAmount || 0),
-        0
-      );
-      const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
-
-      return {
-        id: user.id,
-        fullName: user.fullName,
-        totalOrders,
-        totalSales,
-        averageOrderValue,
-      };
-    });
-  }, [users]);
+  const performanceData = useMemo(() => data || [], [data]);
 
   return (
     <div>
@@ -74,7 +52,7 @@ const StaffPerformanceReport: React.FC = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {performanceData.map((user) => (
-              <tr key={user.id}>
+              <tr key={user.userId}>
                 <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{user.totalOrders}</td>
                 <td className="px-6 py-4 whitespace-nowrap">

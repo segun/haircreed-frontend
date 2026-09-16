@@ -2,15 +2,22 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import type { Order, User, CustomerAddress, CustomerSearchType } from "../../types";
+import type {
+    Customer,
+    CustomerAddress,
+    CustomerSearchType,
+    Order,
+    User,
+} from "../../types";
 import Modal from "../common/Modal";
 import { updateOrder, deleteOrder } from "../../api/orders";
 import { getOrCreateReceiptDraft } from "../../api/receipts";
 import { updateCustomer, createCustomer } from "../../api/customers";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { Edit, Save, X, Search, PlusCircle } from "lucide-react";
-import db from "../../instant";
 import { useCurrency } from "../../context/CurrencyContext";
+import { getCustomerOptions, lookupCustomer } from "../../api/databaseReads";
+import { useApiQuery } from "../../hooks/useApiQuery";
 
 interface OrderDetailsModalProps {
     isOpen: boolean;
@@ -19,6 +26,8 @@ interface OrderDetailsModalProps {
     onClose: () => void;
     onOrderStatusChange: (orderId: string, status: string) => void;
     onPaymentStatusChange: (orderId: string, status: string) => void;
+    onOrderUpdated: () => void;
+    onOrderDeleted: () => void;
 }
 
 const ORDER_STATUSES = [
@@ -39,6 +48,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     onClose,
     onOrderStatusChange,
     onPaymentStatusChange,
+    onOrderUpdated,
+    onOrderDeleted,
 }) => {
     const navigate = useNavigate();
     const { formatCurrency } = useCurrency();
@@ -56,6 +67,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     const [searchType, setSearchType] = useState<CustomerSearchType>("email");
     const [isSearching, setIsSearching] = useState(false);
     const [isNewCustomerMode, setIsNewCustomerMode] = useState(false);
+    const [searchedCustomer, setSearchedCustomer] = useState<Customer | null>(null);
 
     // Address management
     const [selectedAddressId, setSelectedAddressId] = useState<string>("");
@@ -78,14 +90,22 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     const [editedNotes, setEditedNotes] = useState(order.notes || "");
     const [editedWigger, setEditedWigger] = useState(order.wigger?.name || "");
 
-    // Fetch all customers for dropdown
-    const { data: customersData } = db.useQuery({
-        Customers: { addresses: {} },
-    });
+    const { data: customersData, refetch: refetchCustomers } = useApiQuery(
+        "order-details-customer-options",
+        (signal) =>
+            getCustomerOptions(
+                { pageSize: 100, sort: "fullName:asc", includeAddresses: true },
+                signal,
+            ),
+        isOpen,
+    );
 
-    const allCustomers = customersData?.Customers || [];
+    const allCustomers = customersData?.data || [];
     // Get selected customer details
-    const selectedCustomer = allCustomers.find((c: any) => c.id === selectedCustomerId) || null;
+    const selectedCustomer =
+        (searchedCustomer?.id === selectedCustomerId ? searchedCustomer : null) ||
+        allCustomers.find((customer) => customer.id === selectedCustomerId) ||
+        null;
 
     // Reset edited fields when order changes
     useEffect(() => {
@@ -102,6 +122,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         setIsEditMode(false);
         setIsAddingNewAddress(false);
         setIsNewCustomerMode(false);
+        setSearchedCustomer(null);
     }, [order]);
 
     // Update selected address when customer changes
@@ -182,6 +203,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                 success: "Order deleted successfully!",
                 error: (err: Error) => `Failed to delete order: ${err.message}`,
             });
+            onOrderDeleted();
             // Close modal after deletion
             onClose();
         } catch (error) {
@@ -236,18 +258,11 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
         setIsSearching(true);
         try {
-            const { data } = await db.queryOnce({
-                Customers: {
-                    $: searchType
-                        ? { where: { [searchType]: searchQuery.trim() } }
-                        : { where: { id: "" } },
-                    addresses: {},
-                },
-            });
+            const foundCustomer = await lookupCustomer(searchType, searchQuery.trim());
 
-            if (data.Customers && data.Customers.length > 0) {
-                const foundCustomer = data.Customers[0];
+            if (foundCustomer) {
                 setSelectedCustomerId(foundCustomer.id);
+                setSearchedCustomer(foundCustomer);
                 setEditedCustomer({
                     fullName: foundCustomer.fullName || "",
                     email: foundCustomer.email || "",
@@ -260,6 +275,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             } else {
                 // Customer not found - activate new customer mode
                 setSelectedCustomerId("");
+                setSearchedCustomer(null);
                 setEditedCustomer({
                     fullName: "",
                     email: searchType === "email" ? searchQuery.trim() : "",
@@ -290,6 +306,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
     const handleNewCustomer = () => {
         setSelectedCustomerId("");
+        setSearchedCustomer(null);
         setEditedCustomer({
             fullName: "",
             email: "",
@@ -329,6 +346,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                     });
                     finalCustomerId = createdCustomer.id;
                     customerChanged = true;
+                    refetchCustomers();
                     toast.success("Customer created successfully");
                 } catch (error) {
                     console.error(error);
@@ -346,6 +364,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                 isPrimary: newAddress.isPrimary,
                             },
                         });
+                        refetchCustomers();
                         toast.success("Address added successfully");
                     } catch (error) {
                         console.error(error);
@@ -392,6 +411,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
             setIsEditMode(false);
             setIsAddingNewAddress(false);
+            onOrderUpdated();
             // Refresh the order data by closing and potentially reopening
             onClose();
         } catch (error) {
@@ -535,6 +555,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                                                     handleNewCustomer();
                                                 } else {
                                                     setSelectedCustomerId(value);
+                                                    setSearchedCustomer(null);
                                                     setIsNewCustomerMode(false);
                                                 }
                                             }}

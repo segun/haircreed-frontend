@@ -1,21 +1,15 @@
 import React, { useMemo } from 'react';
-import db from '../../instant';
+import { getWiggerPerformance } from '../../api/databaseReads';
+import { useApiQuery } from '../../hooks/useApiQuery';
 
 const WiggerReport: React.FC = () => {
-  const { isLoading, error, data } = db.useQuery({
-    Wigger: {
-      orders: {},
-    },
-  });
+  const { isLoading, error, data } = useApiQuery(
+    'reports-wigger-performance',
+    (signal) => getWiggerPerformance({}, signal),
+  );
 
   const wiggerStats = useMemo(() => {
-    if (!data?.Wigger) return [];
-    
-    return data.Wigger.map((wigger) => ({
-      name: wigger.name,
-      orderCount: wigger.orders?.length || 0,
-      wigger,
-    })).sort((a, b) => b.orderCount - a.orderCount);
+    return data?.data || [];
   }, [data]);
 
   if (isLoading) {
@@ -38,7 +32,7 @@ const WiggerReport: React.FC = () => {
     );
   }
 
-  const totalOrders = wiggerStats.reduce((sum, w) => sum + w.orderCount, 0);
+  const totalOrders = data?.summary.totalOrders || 0;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -46,7 +40,7 @@ const WiggerReport: React.FC = () => {
       
       <div className="mb-6">
         <p className="text-zinc-600">
-          Total Wiggers: <span className="font-semibold">{wiggerStats.length}</span>
+          Total Wiggers: <span className="font-semibold">{data?.summary.totalWiggers || 0}</span>
         </p>
         <p className="text-zinc-600">
           Total Orders: <span className="font-semibold">{totalOrders}</span>
@@ -73,7 +67,7 @@ const WiggerReport: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-zinc-200">
               {wiggerStats.map((wigger) => (
-                <tr key={wigger.wigger.id} className="hover:bg-zinc-50">
+                <tr key={wigger.wiggerId} className="hover:bg-zinc-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-zinc-900">
                     {wigger.name}
                   </td>
@@ -81,9 +75,7 @@ const WiggerReport: React.FC = () => {
                     {wigger.orderCount}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-700">
-                    {totalOrders > 0 
-                      ? ((wigger.orderCount / totalOrders) * 100).toFixed(1) 
-                      : '0.0'}%
+                    {wigger.percentage.toFixed(1)}%
                   </td>
                 </tr>
               ))}

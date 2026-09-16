@@ -3,11 +3,13 @@ import { Pencil, Trash2, ChevronLeft, ChevronRight, MapPin } from "lucide-react"
 import type { Customer } from "../../types";
 import ConfirmDialog from "../common/ConfirmDialog";
 import LoadingIndicator from "../common/LoadingIndicator";
-import db from "../../instant";
+import { getCustomers } from "../../api/databaseReads";
+import { useApiQuery } from "../../hooks/useApiQuery";
 
 type CustomerTableProps = {
     onEdit: (customer: Customer) => void;
-    onDelete: (customerId: string) => void;
+    onDelete: (customerId: string) => void | Promise<void>;
+    refreshKey: number;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -83,7 +85,7 @@ const SmartPagination: React.FC<{
     );
 };
 
-const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete }) => {
+const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete, refreshKey }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -99,35 +101,20 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete }) => {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Build database query with filtering and pagination
-    const query = {
-        Customers: {
-            addresses: {},
-            $: {
-                limit: ITEMS_PER_PAGE,
-                offset: ITEMS_PER_PAGE * (currentPage - 1),
-                ...(debouncedSearchTerm.trim() && {
-                    where: {
-                        or: [
-                            { fullName: { $like: `%${debouncedSearchTerm}%` } },
-                            { email: { $like: `%${debouncedSearchTerm}%` } },
-                            { phoneNumber: { $like: `%${debouncedSearchTerm}%` } },
-                            { headSize: { $like: `%${debouncedSearchTerm}%` } },
-                        ],
-                    },
-                }),
-            },
-        },
-    };
-
-    const { data, isLoading, pageInfo } = db.useQuery(query);
-    const customers = (data?.Customers || []) as Customer[];
-
-    // Calculate total pages from pageInfo
-    const totalItems = pageInfo?.Customers?.hasNextPage
-        ? (currentPage + 1) * ITEMS_PER_PAGE // We don't know exact count, estimate
-        : (currentPage - 1) * ITEMS_PER_PAGE + customers.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+    const queryKey = `customers:${currentPage}:${debouncedSearchTerm.trim()}:${refreshKey}`;
+    const { data, error, isLoading, refetch } = useApiQuery(
+        queryKey,
+        (signal) => getCustomers({
+            q: debouncedSearchTerm.trim(),
+            page: currentPage,
+            pageSize: ITEMS_PER_PAGE,
+            sort: "fullName:asc",
+            includeAddresses: true,
+        }, signal),
+    );
+    const customers = (data?.data || []) as Customer[];
+    const totalItems = data?.pagination.totalItems || 0;
+    const totalPages = Math.max(1, data?.pagination.totalPages || 1);
 
     // Reset to page 1 when search term changes
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,9 +125,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete }) => {
         setDeleteCustomerId(customerId);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (deleteCustomerId) {
-            onDelete(deleteCustomerId);
+            await onDelete(deleteCustomerId);
+            refetch();
             setDeleteCustomerId(null);
         }
     };
@@ -164,6 +152,9 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete }) => {
     return (
         <div className="bg-white rounded-lg shadow-md relative">
             {isLoading && <LoadingIndicator />}
+            {error && (
+                <p className="m-4 bg-red-100 p-3 text-sm text-red-600">Error: {error.message}</p>
+            )}
 
             {/* Search bar */}
             <div className="p-4 border-b border-zinc-200">
@@ -268,7 +259,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete }) => {
             {totalPages > 1 && (
                 <div className="px-4 py-3 border-t border-zinc-200 flex items-center justify-between">
                     <div className="text-sm text-zinc-600">
-                        Showing {startIndex + 1} to {endIndex} of {totalItems}+ customers
+                        Showing {startIndex + 1} to {endIndex} of {totalItems} customers
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -286,7 +277,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ onEdit, onDelete }) => {
                         />
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={!pageInfo?.Customers?.hasNextPage && currentPage === totalPages}
+                            disabled={!data?.pagination.hasNextPage}
                             className="px-3 py-1 text-sm font-medium text-zinc-700 bg-white border border-zinc-300 rounded-md hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                         >
                             Next

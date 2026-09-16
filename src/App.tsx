@@ -21,6 +21,7 @@ import ReceiptsPage from './pages/ReceiptsPage';
 import ReceiptEditorPage from './pages/ReceiptEditorPage';
 import type { LoginResult } from './api/auth';
 import { clearAuthSession, setAuthSession, subscribeToSessionInvalidation } from './api/authSession';
+import { CurrencyProvider } from './context/CurrencyContext';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -97,23 +98,25 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/dashboard" element={<DashboardPage user={user} onLogout={handleLogout} />} />
-      <Route path="/inventory-attributes" element={<InventoryAttributesPage user={user} onLogout={handleLogout} />} />
-      <Route path="/inventory" element={<InventoryPage user={user} onLogout={handleLogout} />} />
-      <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
-      <Route path="/customers" element={<CustomersPage user={user} onLogout={handleLogout} />} />
-      <Route path="/products" element={<ProductsPage user={user} onLogout={handleLogout} />} />
-      <Route path="/audits" element={<AuditsPage user={user} onLogout={handleLogout} />} />
-      <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
-      <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
-      <Route path="/receipts" element={<ReceiptsPage user={user} onLogout={handleLogout} />} />
-      <Route path="/receipts/:receiptId" element={<ReceiptEditorPage user={user} onLogout={handleLogout} />} />
-      <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />
-      <Route path="/settings" element={<AppSettingsPage user={user} onLogout={handleLogout}/>} />
-      <Route path="/user-settings" element={<UserSettingsPage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />} />
-      <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
-    </Routes>
+    <CurrencyProvider>
+      <Routes>
+        <Route path="/dashboard" element={<DashboardPage user={user} onLogout={handleLogout} />} />
+        <Route path="/inventory-attributes" element={<InventoryAttributesPage user={user} onLogout={handleLogout} />} />
+        <Route path="/inventory" element={<InventoryPage user={user} onLogout={handleLogout} />} />
+        <Route path="/users" element={<UserManagementPage user={user} onLogout={handleLogout} />} />
+        <Route path="/customers" element={<CustomersPage user={user} onLogout={handleLogout} />} />
+        <Route path="/products" element={<ProductsPage user={user} onLogout={handleLogout} />} />
+        <Route path="/audits" element={<AuditsPage user={user} onLogout={handleLogout} />} />
+        <Route path="/orders" element={<OrderPage user={user} onLogout={handleLogout} />} />
+        <Route path="/view-orders" element={<ViewOrdersPage user={user} onLogout={handleLogout} />} />
+        <Route path="/receipts" element={<ReceiptsPage user={user} onLogout={handleLogout} />} />
+        <Route path="/receipts/:receiptId" element={<ReceiptEditorPage user={user} onLogout={handleLogout} />} />
+        <Route path="/reports" element={<ReportsPage user={user} onLogout={handleLogout} />} />
+        <Route path="/settings" element={<AppSettingsPage user={user} onLogout={handleLogout}/>} />
+        <Route path="/user-settings" element={<UserSettingsPage user={user} onLogout={handleLogout} onUserUpdate={handleUserUpdate} />} />
+        <Route path="*" element={<DashboardPage user={user} onLogout={handleLogout} />} />
+      </Routes>
+    </CurrencyProvider>
   );
 }
 

@@ -1,23 +1,17 @@
 import React from "react";
-import db from "../../instant";
+import { getLowStock } from "../../api/databaseReads";
+import { useApiQuery } from "../../hooks/useApiQuery";
 
 // NOTE: The threshold is hardcoded to 10 for now.
 const LOW_STOCK_THRESHOLD = 10;
 
 const LowStockReport: React.FC = () => {
-    const { isLoading, error, data } = db.useQuery({
-        InventoryItems: {
-            $: {
-                where: { quantity: { $lte: LOW_STOCK_THRESHOLD } },
-            },
-            attributes: {
-                category: {},
-            },
-            supplier: {},
-        },
-    });
+    const { isLoading, error, data } = useApiQuery(
+        `reports-low-stock-${LOW_STOCK_THRESHOLD}`,
+        (signal) => getLowStock(LOW_STOCK_THRESHOLD, signal),
+    );
 
-    const items = data?.InventoryItems || [];
+    const items = data || [];
 
     const getInventoryItemName = (item: (typeof items)[0]) => {
         if (!item.attributes || item.attributes.length === 0) return "N/A";

@@ -98,7 +98,8 @@ const LogoutButton = ({
 );
 
 import { Toaster } from "react-hot-toast";
-import db from "../../instant";
+import { getCurrentAppSettings } from "../../api/databaseReads";
+import { useApiQuery } from "../../hooks/useApiQuery";
 
 export default function AdminLayout({
   user,
@@ -109,14 +110,13 @@ export default function AdminLayout({
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
-  const {
-    data: appSettings,
-  } = db.useQuery({
-    AppSettings: {},
-  });
+  const { data: appSettings } = useApiQuery(
+    "admin-layout-settings",
+    getCurrentAppSettings,
+  );
 
-  const businessName = appSettings?.AppSettings?.[0]?.settings?.businessName || "HairCreed";
-  const businessLogo = appSettings?.AppSettings?.[0]?.settings?.businessLogo;
+  const businessName = appSettings?.settings.businessName || "HairCreed";
+  const businessLogo = appSettings?.settings.businessLogo;
 
   const navigation = [
     { name: "Dashboard", path: "/dashboard", icon: <Home size={20} /> },
