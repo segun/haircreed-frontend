@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Plus, Send, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Pencil, Plus, Send, Trash2, X } from "lucide-react";
 import type {
   Customer,
   Receipt,
@@ -34,6 +34,8 @@ const toDateInputValue = (timestamp: number) => {
 const dateInputToTimestamp = (value: string) =>
   new Date(`${value}T00:00:00`).getTime();
 
+const customerOptionLabel = (customer: Customer) => customer.email;
+
 type FromProfile = {
   businessName: string;
   businessAddress: string;
@@ -62,6 +64,8 @@ export default function ReceiptEditor({
   const [businessName, setBusinessName] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [customerId, setCustomerId] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [isEditingTo, setIsEditingTo] = useState(false);
   const [receiptDate, setReceiptDate] = useState("");
   const [lineItems, setLineItems] = useState<EditableReceiptLineItem[]>([
     createBlankLine(),
@@ -73,6 +77,7 @@ export default function ReceiptEditor({
   });
   const [isSavingFrom, setIsSavingFrom] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const toInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const savedItems = Array.isArray(receipt.lineItems)
@@ -87,7 +92,13 @@ export default function ReceiptEditor({
 
     setBusinessName(initialBusinessName || "");
     setBusinessAddress(initialBusinessAddress || "");
-    setCustomerId(receipt.customerId || receipt.customer?.id || "");
+    const initialCustomerId = receipt.customerId || receipt.customer?.id || "";
+    const initialCustomer =
+      customers.find((customer) => customer.id === initialCustomerId) ||
+      receipt.customer;
+    setCustomerId(initialCustomerId);
+    setCustomerSearch(initialCustomer ? customerOptionLabel(initialCustomer) : "");
+    setIsEditingTo(false);
     setReceiptDate(
       toDateInputValue(
         receipt.status === "SENT" && receipt.receiptDate
@@ -105,7 +116,14 @@ export default function ReceiptEditor({
         : [createBlankLine()],
     );
     setErrors({});
-  }, [receipt, defaultBusinessName, defaultBusinessAddress]);
+  }, [receipt, customers, defaultBusinessName, defaultBusinessAddress]);
+
+  useEffect(() => {
+    if (isEditingTo) {
+      toInputRef.current?.focus();
+      toInputRef.current?.select();
+    }
+  }, [isEditingTo]);
 
   const selectedCustomer = customers.find(
     (customer) => customer.id === customerId,
@@ -309,22 +327,46 @@ export default function ReceiptEditor({
               <label htmlFor="receipt-customer" className="text-xs font-semibold uppercase text-zinc-500">
                 To
               </label>
-              <select
-                id="receipt-customer"
-                value={customerId}
-                onChange={(event) => setCustomerId(event.target.value)}
-                className={inputClass}
-              >
-                <option value="">Select a customer</option>
-                {customers
-                  .slice()
-                  .sort((a, b) => a.fullName.localeCompare(b.fullName))
-                  .map((customer) => (
-                    <option key={customer.id} value={customer.id}>
-                      {customer.fullName} ({customer.email})
-                    </option>
-                  ))}
-              </select>
+              <div className="mt-1 flex border border-zinc-300 bg-white focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTo(true)}
+                  disabled={isSubmitting}
+                  className="flex w-10 shrink-0 items-center justify-center border-r border-zinc-300 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Edit receipt recipient"
+                  title="Edit recipient"
+                >
+                  <Pencil size={16} />
+                </button>
+                <input
+                  ref={toInputRef}
+                  id="receipt-customer"
+                  list="receipt-customer-options"
+                  value={customerSearch}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const customer = customers.find(
+                      (option) => customerOptionLabel(option) === value,
+                    );
+                    setCustomerSearch(value);
+                    setCustomerId(customer?.id || "");
+                  }}
+                  disabled={!isEditingTo || isSubmitting}
+                  placeholder="Select a customer"
+                  className={`${groupedInputClass} disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-600`}
+                />
+                <datalist id="receipt-customer-options">
+                  {customers
+                    .slice()
+                    .sort((a, b) => a.fullName.localeCompare(b.fullName))
+                    .map((customer) => (
+                      <option
+                        key={customer.id}
+                        value={customerOptionLabel(customer)}
+                      />
+                    ))}
+                </datalist>
+              </div>
               {selectedCustomer && (
                 <div className="mt-3 text-sm text-zinc-600">
                   <p>{selectedCustomer.email}</p>
