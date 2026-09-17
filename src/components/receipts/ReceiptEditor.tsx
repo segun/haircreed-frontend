@@ -34,8 +34,6 @@ const toDateInputValue = (timestamp: number) => {
 const dateInputToTimestamp = (value: string) =>
   new Date(`${value}T00:00:00`).getTime();
 
-const customerOptionLabel = (customer: Customer) => customer.email;
-
 type FromProfile = {
   businessName: string;
   businessAddress: string;
@@ -64,7 +62,7 @@ export default function ReceiptEditor({
   const [businessName, setBusinessName] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
   const [customerId, setCustomerId] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
+  const [recipientEmail, setRecipientEmail] = useState("");
   const [isEditingTo, setIsEditingTo] = useState(false);
   const [receiptDate, setReceiptDate] = useState("");
   const [lineItems, setLineItems] = useState<EditableReceiptLineItem[]>([
@@ -97,7 +95,7 @@ export default function ReceiptEditor({
       customers.find((customer) => customer.id === initialCustomerId) ||
       receipt.customer;
     setCustomerId(initialCustomerId);
-    setCustomerSearch(initialCustomer ? customerOptionLabel(initialCustomer) : "");
+    setRecipientEmail(receipt.customerEmail || initialCustomer?.email || "");
     setIsEditingTo(false);
     setReceiptDate(
       toDateInputValue(
@@ -198,8 +196,11 @@ export default function ReceiptEditor({
     }
     if (!selectedCustomer) {
       nextErrors.customerId = "Select a customer.";
-    } else if (!selectedCustomer.email?.trim()) {
-      nextErrors.customerId = "The selected customer must have an email address.";
+    }
+    if (!recipientEmail.trim()) {
+      nextErrors.recipientEmail = "A recipient email is required.";
+    } else if (!/^\S+@\S+\.\S+$/.test(recipientEmail.trim())) {
+      nextErrors.recipientEmail = "Enter a valid recipient email.";
     }
 
     lineItems.forEach((item, index) => {
@@ -242,6 +243,7 @@ export default function ReceiptEditor({
         businessName: businessName.trim(),
         businessAddress: businessAddress.trim(),
         customerId,
+        recipientEmail: recipientEmail.trim(),
         currency,
         lineItems: lineItems.map(
           ({ discountMode: _discountMode, discountValue: _discountValue, ...item }) => ({
@@ -341,16 +343,10 @@ export default function ReceiptEditor({
                 <input
                   ref={toInputRef}
                   id="receipt-customer"
+                  type="email"
                   list="receipt-customer-options"
-                  value={customerSearch}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    const customer = customers.find(
-                      (option) => customerOptionLabel(option) === value,
-                    );
-                    setCustomerSearch(value);
-                    setCustomerId(customer?.id || "");
-                  }}
+                  value={recipientEmail}
+                  onChange={(event) => setRecipientEmail(event.target.value)}
                   disabled={!isEditingTo || isSubmitting}
                   placeholder="Select a customer"
                   className={`${groupedInputClass} disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-600`}
@@ -362,7 +358,7 @@ export default function ReceiptEditor({
                     .map((customer) => (
                       <option
                         key={customer.id}
-                        value={customerOptionLabel(customer)}
+                        value={customer.email}
                       />
                     ))}
                 </datalist>
@@ -375,6 +371,11 @@ export default function ReceiptEditor({
               )}
               {errors.customerId && (
                 <p className="mt-1 text-sm text-red-600">{errors.customerId}</p>
+              )}
+              {errors.recipientEmail && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.recipientEmail}
+                </p>
               )}
             </div>
           </section>

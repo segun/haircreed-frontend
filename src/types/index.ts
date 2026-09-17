@@ -189,6 +189,7 @@ export type SendReceiptRequest = {
   businessName: string;
   businessAddress: string;
   customerId: string;
+  recipientEmail: string;
   currency: string;
   lineItems: ReceiptLineItem[];
 };

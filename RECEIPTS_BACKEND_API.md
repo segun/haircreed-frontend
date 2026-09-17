@@ -157,6 +157,7 @@ The same endpoint handles the first send and every resend. It updates the existi
   "businessName": "HairCreed",
   "businessAddress": "1 Example Street\nAccra",
   "customerId": "customer-id",
+  "recipientEmail": "receipts@example.com",
   "currency": "GH₵",
   "lineItems": [
     {
@@ -176,7 +177,8 @@ The same endpoint handles the first send and every resend. It updates the existi
 - Authenticated actor is `SUPER_ADMIN`.
 - `receiptDate` is a valid timestamp.
 - `businessName` and `businessAddress` are nonblank.
-- Customer exists and has a nonblank, valid email address.
+- Customer exists.
+- `recipientEmail` is a nonblank, valid email address.
 - At least one line item is present.
 - Every description is nonblank.
 - Every quantity is finite and greater than zero.
@@ -190,8 +192,8 @@ The same endpoint handles the first send and every resend. It updates the existi
 
 1. Validate and calculate the complete receipt.
 2. Render the PDF from the validated server-side values.
-3. Email the PDF to the selected customer's current email address.
-4. Persist the receipt snapshots, customer relationship, calculated total, and audit fields.
+3. Email the PDF to `recipientEmail`.
+4. Persist `recipientEmail` as the `customerEmail` snapshot along with the customer relationship, other receipt snapshots, calculated total, and audit fields.
 5. On first send, set `status = "SENT"`, set `sentAt`, and increment `sendCount` from 0 to 1.
 6. On resend, retain `sentAt`, set `resentAt`, and increment `sendCount`.
 7. Return the exact generated PDF.
