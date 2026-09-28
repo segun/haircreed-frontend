@@ -480,6 +480,20 @@ Response: paginated `Customer[]`. When `includeAddresses=false`, the `addresses`
 
 This endpoint supplies customer selectors in order and receipt editing. It is separate from the administration list so access and future response projections can evolve independently.
 
+### Delete customer address
+
+```text
+DELETE /api/v1/customers/{customerId}/addresses/{addressId}
+```
+
+Authorization: `SUPER_ADMIN`.
+
+The backend must verify that both the customer and address exist and that the address belongs to the customer in the URL. Return `404 Not Found` for a missing customer, a missing address, or an address owned by a different customer.
+
+Delete only the address; the customer and its orders, receipts, and other addresses remain unchanged. If the deleted address was primary and other addresses remain, atomically mark the oldest remaining address by `createdAt` as primary. If no addresses remain, the customer has no primary address.
+
+Success response: `204 No Content` with an empty body. The endpoint must be transactional so deletion and any primary-address reassignment cannot diverge.
+
 ### 9. User list
 
 ```text

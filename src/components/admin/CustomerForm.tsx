@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
 import type { Customer, CustomerAddress } from "../../types";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 type CustomerFormProps = {
     customer: Customer | null;
     onSave: (customer: Omit<Customer, "id" | "createdAt" | "orders" | "addresses"> & { id?: string; newAddress?: Partial<CustomerAddress> | null; addressChanged?: boolean; updatedAddresses?: Partial<CustomerAddress>[] | null }) => Promise<void>;
     onCancel: () => void;
+    onDeleteAddress: (address: CustomerAddress) => void;
     isSubmitting: boolean;
 };
 
-const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSave, onCancel, isSubmitting }) => {
+const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSave, onCancel, onDeleteAddress, isSubmitting }) => {
     const [formData, setFormData] = useState({
         fullName: "",
         email: "",
@@ -265,6 +266,18 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customer, onSave, onCancel,
                             >
                                 <PlusCircle size={20} />
                             </button>
+                            {selectedAddress?.id && (
+                                <button
+                                    type="button"
+                                    onClick={() => onDeleteAddress(selectedAddress as CustomerAddress)}
+                                    disabled={isSubmitting || isAddingNewAddress}
+                                    className="px-3 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
+                                    aria-label="Delete selected address"
+                                    title="Delete selected address"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}

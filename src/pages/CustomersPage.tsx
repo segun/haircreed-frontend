@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import type { User, Customer, CustomerAddress } from "../types";
-import { createCustomer, deleteCustomer, updateCustomer } from "../api/customers";
+import { createCustomer, deleteCustomer, deleteCustomerAddress, updateCustomer } from "../api/customers";
 import AdminLayout from "../components/layouts/AdminLayout";
 import CustomerForm from "../components/admin/CustomerForm";
 import CustomerTable from "../components/admin/CustomerTable";
 import LoadingIndicator from "../components/common/LoadingIndicator";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import toast from "react-hot-toast";
 
 type CustomersPageProps = {
@@ -17,6 +18,7 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [addressToDelete, setAddressToDelete] = useState<CustomerAddress | null>(null);
 
     const handleSaveCustomer = async (customerData: Omit<Customer, "id" | "createdAt" | "orders" | "addresses"> & { id?: string; newAddress?: Partial<CustomerAddress> | null }) => {
         setIsSubmitting(true);
@@ -67,6 +69,28 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
         setEditingCustomer(null);
     };
 
+    const handleDeleteAddress = async () => {
+        if (!editingCustomer || !addressToDelete) return;
+
+        setIsSubmitting(true);
+        try {
+            await deleteCustomerAddress(editingCustomer.id, addressToDelete.id);
+            setEditingCustomer({
+                ...editingCustomer,
+                addresses: editingCustomer.addresses.filter(
+                    (address) => address.id !== addressToDelete.id,
+                ),
+            });
+            setRefreshKey((current) => current + 1);
+            setAddressToDelete(null);
+            toast.success("Address deleted successfully");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to delete address");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     // Access control: Only SUPER_ADMIN can access this page
     if (user.role !== "SUPER_ADMIN") {
         return (
@@ -108,6 +132,7 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                     <div className="mb-6">
                         <CustomerForm
                             customer={editingCustomer}
+                            onDeleteAddress={setAddressToDelete}
                             onSave={handleSaveCustomer}
                             onCancel={handleCancel}
                             isSubmitting={isSubmitting}
@@ -118,6 +143,13 @@ const CustomersPage: React.FC<CustomersPageProps> = ({ user, onLogout }: Custome
                     onEdit={handleEditCustomer}
                     onDelete={handleDeleteCustomer}
                     refreshKey={refreshKey}
+                />
+                <ConfirmDialog
+                    isOpen={Boolean(addressToDelete)}
+                    title="Delete Address"
+                    message={`Delete the address "${addressToDelete?.address}"? This action cannot be undone.`}
+                    onConfirm={handleDeleteAddress}
+                    onClose={() => setAddressToDelete(null)}
                 />
             </div>
         </AdminLayout>

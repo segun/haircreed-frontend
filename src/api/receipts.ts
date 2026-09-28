@@ -66,3 +66,13 @@ export const sendReceipt = async (
   anchor.remove();
   window.URL.revokeObjectURL(url);
 };
+
+export const deleteReceipt = async (receiptId: string): Promise<void> => {
+  const response = await authorizedFetch(`${BASE_URL}/${receiptId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response, "Failed to delete receipt"));
+  }
+};

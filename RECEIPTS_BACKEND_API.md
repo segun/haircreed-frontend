@@ -105,7 +105,7 @@ This operation is idempotent by `orderId`.
 1. Authorize the actor as `SUPER_ADMIN`.
 2. Load the order and require `paymentStatus === "PAID"`.
 3. If a receipt already exists for `orderId`, return it unchanged, whether its status is `DRAFT` or `SENT`.
-4. Otherwise, atomically reserve `MAX(receiptNumber) + 1`. If the latest receipt number is 22, reserve 23.
+4. Otherwise, atomically reserve the next value from a durable monotonic sequence or allocation record. If the latest number ever allocated is 22, reserve 23, even when receipt 22 has since been deleted.
 5. Create a `DRAFT` linked to the order and the order's customer.
 6. Snapshot the current customer identity fields and initialize business defaults from AppSettings.
 7. Initialize `lineItems` to `[]`. Do not copy `Orders.items`.
@@ -215,7 +215,23 @@ Body: raw PDF bytes.
 
 The frontend automatically downloads this response after the email succeeds.
 
-## 3. Update From Defaults
+## 3. Delete Receipt
+
+`DELETE /api/v1/receipts/:receiptId`
+
+Authorization: `SUPER_ADMIN` only.
+
+The backend must:
+
+1. Return `404 Not Found` when the receipt does not exist.
+2. Delete the receipt record, whether its status is `DRAFT` or `SENT`.
+3. Leave the related order, customer, and application settings unchanged.
+4. Never reuse the deleted receipt number. Future draft allocation must remain greater than every number previously allocated, including deleted receipts. Use a sequence or allocation record rather than relying only on `MAX(receiptNumber)` from live rows.
+5. Allow a later draft request for the same order to create a new receipt with a new receipt number.
+
+Success response: `204 No Content` with an empty body.
+
+## 4. Update From Defaults
 
 Extend the existing endpoint:
 
@@ -284,3 +300,4 @@ Reads are snapshots. The frontend refetches affected endpoints after successful 
 7. Invalid line arithmetic is rejected and never persisted.
 8. A delivery failure does not appear to the frontend as a successful send.
 9. Updating AppSettings business address changes defaults for future drafts but not historical sent receipt snapshots.
+10. Deleting a receipt returns `204`, removes it from history, leaves its order and customer intact, and its receipt number is never reused.

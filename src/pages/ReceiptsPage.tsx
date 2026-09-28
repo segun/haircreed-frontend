@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import AdminLayout from "../components/layouts/AdminLayout";
+import ConfirmDialog from "../components/common/ConfirmDialog";
 import LoadingIndicator from "../components/common/LoadingIndicator";
 import { useCurrency } from "../context/CurrencyContext";
 import { getReceipts } from "../api/databaseReads";
+import { deleteReceipt } from "../api/receipts";
 import { useApiQuery } from "../hooks/useApiQuery";
 import type { Receipt, User } from "../types";
 
@@ -24,6 +27,8 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
   const navigate = useNavigate();
   const { formatCurrency } = useCurrency();
   const [currentPage, setCurrentPage] = useState(1);
+  const [receiptToDelete, setReceiptToDelete] = useState<Receipt | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [filters, setFilters] = useState({
     receiptDate: "",
     dateStart: "",
@@ -50,7 +55,7 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
     pageSize: ITEMS_PER_PAGE,
     sort: "receiptDate:desc",
   };
-  const { data, isLoading, error } = useApiQuery(
+  const { data, isLoading, error, refetch } = useApiQuery(
     `receipts:${JSON.stringify(receiptQuery)}`,
     (signal) => getReceipts(receiptQuery, signal),
     user.role === "SUPER_ADMIN",
@@ -77,6 +82,30 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
 
   const openReceipt = (receiptId: string) => navigate(`/receipts/${receiptId}`);
 
+  const handleDeleteReceipt = async () => {
+    if (!receiptToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteReceipt(receiptToDelete.id);
+      toast.success("Receipt deleted successfully");
+      setReceiptToDelete(null);
+      if (pageReceipts.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
+      } else {
+        refetch();
+      }
+    } catch (deleteError) {
+      toast.error(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete receipt",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (user.role !== "SUPER_ADMIN") {
     return (
       <AdminLayout user={user} onLogout={onLogout} pageTitle="Access Denied">
@@ -94,7 +123,7 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
 
   return (
     <AdminLayout user={user} onLogout={onLogout} pageTitle="Receipts">
-      {isLoading && <LoadingIndicator />}
+      {(isLoading || isDeleting) && <LoadingIndicator />}
       {error && (
         <p className="mb-4 bg-red-100 p-3 text-sm text-red-600">
           Error: {error.message}
@@ -183,6 +212,7 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
                   "Total",
                   "Last Sent",
                   "Sends",
+                  "Actions",
                 ].map((heading) => (
                   <th
                     key={heading}
@@ -196,7 +226,7 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
             <tbody className="divide-y divide-zinc-200">
               {!isLoading && pageReceipts.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-sm text-zinc-500">
+                  <td colSpan={9} className="px-5 py-12 text-center text-sm text-zinc-500">
                     No receipts match these filters.
                   </td>
                 </tr>
@@ -242,6 +272,21 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
                   <td className="whitespace-nowrap px-4 py-4 text-sm text-zinc-600">
                     {receipt.sendCount}
                   </td>
+                  <td className="whitespace-nowrap px-4 py-4 text-sm">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setReceiptToDelete(receipt);
+                      }}
+                      disabled={isDeleting}
+                      className="p-2 text-red-600 hover:bg-red-50 hover:text-red-800 disabled:opacity-50"
+                      aria-label={`Delete receipt ${receipt.receiptNumber}`}
+                      title="Delete receipt"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -275,6 +320,13 @@ export default function ReceiptsPage({ user, onLogout }: ReceiptsPageProps) {
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={Boolean(receiptToDelete)}
+        title="Delete Receipt"
+        message={`Delete receipt ${receiptToDelete?.receiptNumber}? This action cannot be undone.`}
+        onConfirm={handleDeleteReceipt}
+        onClose={() => setReceiptToDelete(null)}
+      />
     </AdminLayout>
   );
 }

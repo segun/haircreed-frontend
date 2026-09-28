@@ -30,3 +30,17 @@ export const deleteCustomer = async (customerId: string): Promise<void> => {
     });
     if (!response.ok) throw new Error('Failed to delete customer');
 };
+
+export const deleteCustomerAddress = async (
+    customerId: string,
+    addressId: string,
+): Promise<void> => {
+    const response = await authorizedFetch(
+        `${BASE_URL}/${customerId}/addresses/${addressId}`,
+        { method: 'DELETE' },
+    );
+    if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.message || 'Failed to delete customer address');
+    }
+};
