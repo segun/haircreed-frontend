@@ -16,7 +16,7 @@ import { updateCustomer, createCustomer } from "../../api/customers";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { Edit, Save, X, Search, PlusCircle } from "lucide-react";
 import { useCurrency } from "../../context/CurrencyContext";
-import { getCustomerOptions, lookupCustomer } from "../../api/databaseReads";
+import { getCustomerOptions, getOrder, lookupCustomer } from "../../api/databaseReads";
 import { useApiQuery } from "../../hooks/useApiQuery";
 
 interface OrderDetailsModalProps {
@@ -62,7 +62,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     const [isPreparingReceipt, setIsPreparingReceipt] = useState(false);
 
     // Customer management state
-    const [selectedCustomerId, setSelectedCustomerId] = useState<string>(order.customer?.id || "");
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string>(
+        order.customer?.id || order.customerId || "",
+    );
     const [searchQuery, setSearchQuery] = useState("");
     const [searchType, setSearchType] = useState<CustomerSearchType>("email");
     const [isSearching, setIsSearching] = useState(false);
@@ -99,11 +101,19 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
             ),
         isOpen,
     );
+    const { data: orderDetail } = useApiQuery(
+        `order-detail:${order.id}`,
+        (signal) => getOrder(order.id, signal),
+        isOpen,
+    );
 
     const allCustomers = customersData?.data || [];
     // Get selected customer details
     const selectedCustomer =
         (searchedCustomer?.id === selectedCustomerId ? searchedCustomer : null) ||
+        (orderDetail?.customer?.id === selectedCustomerId
+            ? orderDetail.customer
+            : null) ||
         allCustomers.find((customer) => customer.id === selectedCustomerId) ||
         null;
 
@@ -118,7 +128,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         setEditedDeliveryMethod(order.deliveryMethod || "DELIVERY");
         setEditedNotes(order.notes || "");
         setEditedWigger(order.wigger?.name || "");
-        setSelectedCustomerId(order.customer?.id || "");
+        setSelectedCustomerId(order.customer?.id || order.customerId || "");
         setIsEditMode(false);
         setIsAddingNewAddress(false);
         setIsNewCustomerMode(false);

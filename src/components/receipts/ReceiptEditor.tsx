@@ -90,10 +90,16 @@ export default function ReceiptEditor({
 
     setBusinessName(initialBusinessName || "");
     setBusinessAddress(initialBusinessAddress || "");
-    const initialCustomerId = receipt.customerId || receipt.customer?.id || "";
+    const initialCustomerId =
+      receipt.customerId ||
+      receipt.customer?.id ||
+      receipt.order?.customerId ||
+      receipt.order?.customer?.id ||
+      "";
     const initialCustomer =
       customers.find((customer) => customer.id === initialCustomerId) ||
-      receipt.customer;
+      receipt.customer ||
+      receipt.order?.customer;
     setCustomerId(initialCustomerId);
     setRecipientEmail(receipt.customerEmail || initialCustomer?.email || "");
     setIsEditingTo(false);
@@ -123,9 +129,14 @@ export default function ReceiptEditor({
     }
   }, [isEditingTo]);
 
-  const selectedCustomer = customers.find(
-    (customer) => customer.id === customerId,
-  );
+  const selectedCustomer =
+    (receipt.customer?.id === customerId ? receipt.customer : undefined) ||
+    (receipt.order?.customer?.id === customerId
+      ? receipt.order.customer
+      : undefined) ||
+    customers.find((customer) => customer.id === customerId);
+  const customerEmail = selectedCustomer?.email || receipt.customerEmail;
+  const customerPhone = selectedCustomer?.phoneNumber || receipt.customerPhone;
 
   const discountAmount = (item: EditableReceiptLineItem) => {
     if (item.discountMode === "percentage") {
@@ -194,7 +205,7 @@ export default function ReceiptEditor({
     if (!receiptDate || Number.isNaN(dateInputToTimestamp(receiptDate))) {
       nextErrors.receiptDate = "A valid receipt date is required.";
     }
-    if (!selectedCustomer) {
+    if (!customerId) {
       nextErrors.customerId = "Select a customer.";
     }
     if (!recipientEmail.trim()) {
@@ -363,10 +374,10 @@ export default function ReceiptEditor({
                     ))}
                 </datalist>
               </div>
-              {selectedCustomer && (
+              {(customerEmail || customerPhone) && (
                 <div className="mt-3 text-sm text-zinc-600">
-                  <p>{selectedCustomer.email}</p>
-                  <p>{selectedCustomer.phoneNumber}</p>
+                  {customerEmail && <p>{customerEmail}</p>}
+                  {customerPhone && <p>{customerPhone}</p>}
                 </div>
               )}
               {errors.customerId && (
